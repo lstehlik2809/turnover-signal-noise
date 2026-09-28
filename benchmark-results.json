@@ -1,0 +1,161 @@
+{
+  "description": "Publication benchmark: independent generated rounds; 12 baseline and 24 test months; change probability 0.5; change month uniform 7–18; relative shift uniform 25–60%, equal directions.",
+  "N": 1000,
+  "p": 0.1,
+  "seed": 20260928,
+  "rounds": 100000,
+  "modelSha256": "80f13c5fdff0f7cb625217cee91d1e053929539d4c0dbcf4a23a72370e99e6bd",
+  "elapsedMs": 5197,
+  "annualBandPct": [
+    8.00835076716138,
+    11.99164923283862
+  ],
+  "exactViews": {
+    "annual": {
+      "sdPercentagePoints": 0.9958246164193104,
+      "outsideAnnualBand": 0.04991968092920868,
+      "outsideOwnBand": 0.04991968092920868,
+      "expectedFlaggedReadingsPerYear": 0.04991968092920868
+    },
+    "quarterly": {
+      "sdPercentagePoints": 1.9916492328386208,
+      "outsideAnnualBand": 0.36559725629726075,
+      "outsideOwnBand": 0.05512664351476606,
+      "expectedFlaggedReadingsPerYear": 1.462389025189043
+    },
+    "monthly": {
+      "sdPercentagePoints": 3.449637662132068,
+      "outsideAnnualBand": 0.5984252657505716,
+      "outsideOwnBand": 0.03350282680854624,
+      "expectedFlaggedReadingsPerYear": 7.18110318900686
+    },
+    "rolling": {
+      "sdPercentagePoints": 0.9958246164193104,
+      "outsideAnnualBand": 0.04991968092920868,
+      "outsideOwnBand": 0.04991968092920868,
+      "expectedFlaggedReadingsPerYear": 0.5990361711505042
+    }
+  },
+  "result": {
+    "seed": 20260928,
+    "rounds": 100000,
+    "stable": 49981,
+    "changed": 50019,
+    "evaluableStable": 49981,
+    "evaluableChanged": 50019,
+    "degenerate": 0,
+    "metrics": {
+      "fa1": {
+        "numerator": 12717,
+        "denominator": 49981,
+        "rate": 0.25443668594065744,
+        "ci": [
+          0.25063729045204847,
+          0.25827382572658947
+        ]
+      },
+      "faA": {
+        "numerator": 20169,
+        "denominator": 49981,
+        "rate": 0.4035333426702147,
+        "ci": [
+          0.3992398263645612,
+          0.40784168637877233
+        ]
+      },
+      "faI": {
+        "numerator": 2272,
+        "denominator": 49981,
+        "rate": 0.04545727376403033,
+        "ci": [
+          0.0436657566189332,
+          0.04731865637690213
+        ]
+      },
+      "mi1": {
+        "numerator": 27091,
+        "denominator": 50019,
+        "rate": 0.5416141866090886,
+        "ci": [
+          0.5372445797245848,
+          0.5459774020460233
+        ]
+      },
+      "miA": {
+        "numerator": 8560,
+        "denominator": 50019,
+        "rate": 0.1711349687118895,
+        "ci": [
+          0.16785966145363965,
+          0.17446078575480642
+        ]
+      },
+      "miI": {
+        "numerator": 4134,
+        "denominator": 50019,
+        "rate": 0.0826485935344569,
+        "ci": [
+          0.08026747420903795,
+          0.08509381310668078
+        ]
+      }
+    },
+    "detection": {
+      "rule1": {
+        "prechangeFalseAlarm": {
+          "numerator": 7913,
+          "denominator": 50019,
+          "rate": 0.15819988404406327,
+          "ci": [
+            0.155028075924787,
+            0.16142418862423868
+          ]
+        },
+        "postChangeNoSignal": {
+          "numerator": 29244,
+          "denominator": 50019,
+          "rate": 0.5846578300245907,
+          "ci": [
+            0.5803329741828991,
+            0.5889696834234621
+          ]
+        },
+        "meanDelay": 3.6511191335740074,
+        "detected": 20775,
+        "totalDelay": 75852
+      },
+      "combined": {
+        "prechangeFalseAlarm": {
+          "numerator": 11468,
+          "denominator": 50019,
+          "rate": 0.22927287630700333,
+          "ci": [
+            0.22560985428190278,
+            0.23297747882081593
+          ]
+        },
+        "postChangeNoSignal": {
+          "numerator": 10068,
+          "denominator": 50019,
+          "rate": 0.20128351226533917,
+          "ci": [
+            0.19779267980126305,
+            0.2048202240538691
+          ]
+        },
+        "meanDelay": 4.001476809091137,
+        "detected": 39951,
+        "totalDelay": 159863
+      }
+    },
+    "fa1": 0.25443668594065744,
+    "faA": 0.4035333426702147,
+    "faI": 0.04545727376403033,
+    "mi1": 0.5416141866090886,
+    "miA": 0.1711349687118895,
+    "miI": 0.0826485935344569,
+    "pointRate": 0.020696197888530974,
+    "pointNumerator": 24826,
+    "pointDenominator": 1199544
+  }
+}

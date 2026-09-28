@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nothing changed. The dashboard disagrees.</title>
+<meta name="description" content="An interactive simulation and game about employee turnover, sampling noise, and finding real change in a dashboard.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ffffff; --ink:#1d2733; --muted:#5b6672; --faint:#9aa3ad; --rule:#e3e7eb; --line:#cfd6dd; --wash:#f2f4f7;
+  --bar:#35597b; --alarm:#cc3131; --alarm-wash:rgba(204,49,49,.045); --fix:#1b7a53; --band:rgba(29,39,51,.055); --amber:#b06a00;
+  --focus:#2d6be0; --shadow:rgba(16,24,32,.22);
+  --serif:"DM Serif Display", Georgia, "Times New Roman", serif;
+  --sans:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#15191e; --ink:#e7ebef; --muted:#a4aeb9; --faint:#6f7a86; --rule:#29313a; --line:#3a444f; --wash:#1f252c;
+    --bar:#8db3d8; --alarm:#ff6d6d; --alarm-wash:rgba(255,109,109,.055); --fix:#52c893; --band:rgba(231,235,239,.07); --amber:#f5b547;
+    --focus:#82b1ff; --shadow:rgba(0,0,0,.6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15191e; --ink:#e7ebef; --muted:#a4aeb9; --faint:#6f7a86; --rule:#29313a; --line:#3a444f; --wash:#1f252c;
+  --bar:#8db3d8; --alarm:#ff6d6d; --alarm-wash:rgba(255,109,109,.055); --fix:#52c893; --band:rgba(231,235,239,.07); --amber:#f5b547;
+  --focus:#82b1ff; --shadow:rgba(0,0,0,.6); color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:1240px;margin:0 auto;padding:28px clamp(16px,4vw,44px) 56px}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+button:disabled{cursor:default;opacity:.45}
+.btn:disabled:hover{border-color:var(--line)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+b,strong{font-weight:700}
+
+/* header */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 24px;align-items:start;padding-bottom:22px}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(36px,5.4vw,64px);line-height:1.02;letter-spacing:-.012em;margin:4px 0 14px;max-width:14ch}
+.lede{margin:0;max-width:64ch;font-size:18px;line-height:1.55;color:var(--muted)}
+.lede b{color:var(--ink)}
+.tools{display:flex;gap:8px;align-items:center}
+@media (max-width:720px){.top{grid-template-columns:1fr}.tools{order:-1;justify-content:flex-end}h1{max-width:none}.panel canvas{height:172px}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 14px;font-size:15px;font-weight:700;line-height:1.2;min-height:40px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);min-width:92px}
+.btn.primary:hover{opacity:.9}
+.icon-btn{width:40px;padding:0}
+.icon-btn svg{width:19px;height:19px}
+.qmark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:13px;line-height:1}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:18px 36px;align-items:flex-end;padding:18px 0 16px;border-top:1px solid var(--rule)}
+.field{display:flex;flex-direction:column;gap:4px;flex:1 1 210px;max-width:300px}
+@media (max-width:720px){.field{max-width:none}}
+.field label{font-size:14.5px;color:var(--muted);display:flex;justify-content:space-between;gap:12px}
+.field output{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ink);height:28px;margin:0}
+.run{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;min-height:40px}
+.seg button{border:0;background:transparent;padding:0 13px;font-size:15px;color:var(--muted)}
+.seg button+button{border-left:1.5px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--wash);color:var(--ink);font-weight:700}
+.years{font-size:14.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px;white-space:nowrap}
+.years b{color:var(--ink)}
+.fixes{display:flex;flex-wrap:wrap;gap:8px 26px;align-items:center;padding:12px 0 14px;border-top:1px dashed var(--rule);border-bottom:1px solid var(--rule);font-size:15.5px}
+.fixes .lead{color:var(--muted)}
+.fixes label{display:inline-flex;gap:9px;align-items:center;cursor:pointer}
+.fixes input{accent-color:var(--fix);width:18px;height:18px;margin:0}
+
+/* panels */
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:30px 30px;margin-top:26px}
+.panel{margin:0;min-width:0}
+.panel[hidden]{display:none}
+.ptitle{display:block;font-weight:700;font-size:17.5px;line-height:1.25}
+.psub{display:block;font-size:14px;color:var(--muted);line-height:1.35;min-height:2.7em}
+.panel.fix .ptitle{color:var(--fix)}
+.panel canvas{display:block;width:100%;height:196px;margin-top:6px}
+.pstats{margin-top:8px}
+.bigline{display:flex;align-items:baseline;gap:10px}
+.bignum{flex:none;font-family:var(--serif);font-size:42px;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.bignum.hot{color:var(--alarm)}
+.biglab{font-size:14.5px;line-height:1.3;color:var(--muted)}
+.small{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.45}
+.small b{color:var(--ink);font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:8px 26px;margin:22px 0 0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+.legend li{display:inline-flex;align-items:center;gap:8px}
+.legend svg{flex:none}
+
+/* game */
+.game{margin-top:60px;padding-top:30px;border-top:1px solid var(--rule)}
+.game h2{font-family:var(--serif);font-weight:400;font-size:clamp(30px,3.6vw,42px);line-height:1.08;margin:0 0 10px;letter-spacing:-.005em}
+.game .intro{margin:0 0 20px;max-width:66ch;color:var(--muted)}
+.game-body{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px 40px;align-items:start}
+@media (max-width:880px){.game-body{grid-template-columns:1fr}}
+.chartcol{min-width:0}
+#gameChartBox{min-width:0}
+.howto{list-style:none;counter-reset:step;margin:0 0 30px;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px}
+@media (max-width:880px){.howto{grid-template-columns:1fr}}
+.howto li{counter-increment:step;position:relative;padding-left:40px;font-size:15.5px;line-height:1.5;color:var(--muted)}
+.howto li b{display:block;color:var(--ink);font-size:17px;margin-bottom:2px}
+.howto li::before{content:counter(step);position:absolute;left:0;top:0;width:27px;height:27px;border-radius:50%;border:1.5px solid var(--ink);color:var(--ink);font-weight:700;font-size:14px;display:grid;place-items:center}
+.round{margin:0 0 4px;font-size:15px;color:var(--muted)}
+.round b{color:var(--ink);margin-right:8px}
+.game-legend{margin-top:10px}
+.hint{font-size:14px;color:var(--muted);margin:12px 0 0}
+@media (hover: none){.kbdhint{display:none}}
+.youSaid{font-size:14.5px;color:var(--muted)}
+.tinynote{font-size:13.5px;color:var(--muted);margin:8px 0 0;max-width:70ch}
+.scoreboard{margin-top:36px}
+.scoreboard h3{font-size:19px;line-height:1.3;margin:0 0 4px}
+.scoreboard .sub{margin:0;font-size:15px;color:var(--muted)}
+.scoreboard table{min-width:0;margin-top:4px}
+.scoreboard th,.scoreboard td{text-align:left;vertical-align:top;padding:9px 14px 9px 0}
+.scoreboard td b{display:block;font-size:16.5px;color:var(--ink)}
+.scoreboard .lr{display:block;font-size:13px;color:var(--muted)}
+.scoreboard tr.you td{background:var(--wash)}
+.scoreboard tr.you td:first-child{padding-left:8px}
+.scoreboard td:first-child{font-weight:700;color:var(--ink);width:36%}
+.scoreboard .thsub{display:block;font-weight:400;font-size:12.5px;color:var(--muted)}
+@media (max-width:560px){.scoreboard th,.scoreboard td{padding-right:8px}.scoreboard .thsub{display:none}.scoreboard td b{font-size:15.5px}}
+.scoreboard tr.muted td:first-child{font-weight:400;color:var(--muted)}
+.fine{font-size:13.5px;line-height:1.5;color:var(--muted);margin:10px 0 0;max-width:92ch}
+.fine a,.dlg a{color:inherit;text-underline-offset:2px}
+#gameChartBox svg{display:block;width:100%;height:auto;overflow:visible}
+.side h3{font-size:18px;margin:2px 0 12px;line-height:1.3}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choices .btn{justify-content:flex-start;padding:10px 14px}
+.choices .btn .k{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;font-size:12px}
+.verdict{margin:0;font-size:16px;line-height:1.5}
+.verdict p{margin:0 0 8px}
+.verdict .note{font-size:14.5px;color:var(--muted)}
+.verdict .tag{font-weight:700}
+.verdict .tag.good{color:var(--fix)}
+.verdict .tag.bad{color:var(--alarm)}
+.score{margin:12px 0 0;font-size:14.5px;color:var(--muted)}
+.score b{color:var(--ink)}
+.next{margin-top:14px}
+
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);font-size:14px;color:var(--muted);max-width:92ch}
+footer p{margin:0 0 8px}
+kbd{font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--ink)}
+
+/* dialog */
+dialog{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 24px));max-height:min(88vh,920px);background:var(--paper);color:var(--ink);box-shadow:0 24px 70px var(--shadow)}
+dialog::backdrop{background:rgba(12,17,22,.52)}
+.dlg{padding:30px 34px 30px;overflow:auto;max-height:min(88vh,920px)}
+@media (max-width:560px){.dlg{padding:24px 20px}}
+.dlg-close{position:sticky;top:0;float:right;margin:-8px -10px 0 12px;background:var(--paper)}
+.dlg h2{font-family:var(--serif);font-weight:400;font-size:34px;line-height:1.1;margin:0 0 12px}
+.dlg h3{font-size:18.5px;margin:26px 0 8px;line-height:1.3}
+.dlg p{margin:0 0 10px;max-width:68ch}
+.dlg .note{font-size:14px;color:var(--muted)}
+.tablewrap{overflow-x:auto;margin:12px 0 8px}
+table{border-collapse:collapse;font-size:14.5px;min-width:560px;width:100%}
+th,td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums;vertical-align:bottom}
+th{font-weight:700;color:var(--muted);font-size:13.5px;line-height:1.25}
+th:first-child,td:first-child{text-align:left;padding-left:0;white-space:nowrap}
+td.hot{color:var(--alarm);font-weight:700}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>Nothing changed. The dashboard disagrees.</h1>
+    <p class="lede" id="lede">This company has <b data-x="N">1,000</b> people and a true turnover of <b data-x="p">10%</b> a year that never changes. Each panel measures the same replayed years. Only how often you look is different, and a shorter window is simply a smaller sample of the same truth.</p>
+  </div>
+  <div class="tools">
+    <button class="btn" id="openExplainer" type="button"><span class="qmark" aria-hidden="true">?</span>What am I looking at?</button>
+    <button class="btn icon-btn" id="themeBtn" type="button" aria-label="Switch to dark mode"></button>
+  </div>
+</header>
+
+<section class="controls" aria-label="Simulation controls">
+  <div class="field">
+    <label for="headcount">Headcount <output id="headcountOut" for="headcount">1,000</output></label>
+    <input type="range" id="headcount" min="0" max="12" step="1" value="6" aria-valuetext="1,000 people">
+  </div>
+  <div class="field">
+    <label for="rate">True annual turnover <output id="rateOut" for="rate">10%</output></label>
+    <input type="range" id="rate" min="2" max="40" step="1" value="10" aria-valuetext="10 percent">
+  </div>
+  <div class="run">
+    <button class="btn primary" id="runBtn" type="button" aria-pressed="false">Run</button>
+    <div class="seg" role="group" aria-label="Speed">
+      <button type="button" data-speed="slow" aria-pressed="true">Slow</button>
+      <button type="button" data-speed="fast" aria-pressed="false">Fast</button>
+    </div>
+    <button class="btn" id="addBtn" type="button">Add 1,000 years</button>
+    <button class="btn" id="clearBtn" type="button">Clear</button>
+    <span class="years" aria-live="off">Years replayed: <b id="yearsOut">0</b></span>
+  </div>
+</section>
+
+<div class="fixes">
+  <span class="lead">Try a fix:</span>
+  <label><input type="checkbox" id="fixRolling"> Add a rolling 12-month view</label>
+  <label><input type="checkbox" id="fixLimits"> Use each view’s own 2 SD reference band</label>
+</div>
+
+<section class="panels" id="panels" aria-label="How the same company looks when measured at different frequencies">
+  <figure class="panel" data-key="annual">
+    <figcaption><span class="ptitle">Annual</span><span class="psub">1 reading a year</span></figcaption>
+    <canvas role="img" aria-label="Annual readings histogram"></canvas>
+    <div class="pstats">
+      <div class="bigline"><span class="bignum" data-f="pct">–</span><span class="biglab">of readings outside the reference band</span></div>
+      <div class="small" data-f="detail"></div>
+    </div>
+  </figure>
+  <figure class="panel" data-key="quarterly">
+    <figcaption><span class="ptitle">Quarterly, annualized</span><span class="psub">4 readings a year, each quarter × 4</span></figcaption>
+    <canvas role="img" aria-label="Quarterly readings histogram"></canvas>
+    <div class="pstats">
+      <div class="bigline"><span class="bignum" data-f="pct">–</span><span class="biglab">of readings outside the reference band</span></div>
+      <div class="small" data-f="detail"></div>
+    </div>
+  </figure>
+  <figure class="panel" data-key="monthly">
+    <figcaption><span class="ptitle">Monthly, annualized</span><span class="psub">12 readings a year, each month × 12</span></figcaption>
+    <canvas role="img" aria-label="Monthly readings histogram"></canvas>
+    <div class="pstats">
+      <div class="bigline"><span class="bignum" data-f="pct">–</span><span class="biglab">of readings outside the reference band</span></div>
+      <div class="small" data-f="detail"></div>
+    </div>
+  </figure>
+  <figure class="panel fix" data-key="rolling" hidden>
+    <figcaption><span class="ptitle">Rolling 12-month</span><span class="psub">12 readings a year, each covering the last 12 months</span></figcaption>
+    <canvas role="img" aria-label="Rolling 12-month readings histogram"></canvas>
+    <div class="pstats">
+      <div class="bigline"><span class="bignum" data-f="pct">–</span><span class="biglab">of readings outside the reference band</span></div>
+      <div class="small" data-f="detail"></div>
+    </div>
+  </figure>
+</section>
+
+<ul class="legend" aria-label="Chart key">
+  <li><svg width="16" height="16" aria-hidden="true"><line x1="8" y1="1" x2="8" y2="15" stroke="var(--alarm)" stroke-width="2.5"/></svg><span id="legendBand">2 SD reference band: true rate ± 2 SD of the annual number</span></li>
+  <li><svg width="16" height="16" aria-hidden="true"><rect x="2" y="3" width="12" height="12" fill="var(--alarm)"/></svg>Readings that would raise an alarm</li>
+  <li><svg width="16" height="16" aria-hidden="true"><line x1="8" y1="1" x2="8" y2="15" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3"/></svg>True rate (never changes)</li>
+  <li><svg width="22" height="16" aria-hidden="true"><path d="M1 15V9h6V3h7v7h7v5" fill="none" stroke="var(--faint)" stroke-width="1.5"/></svg>Expected shape (exact math)</li>
+  <li>Bar height: how often a reading lands there, scaled to fit each panel. Compare widths, not heights.</li>
+</ul>
+
+<section class="game" aria-labelledby="gameTitle">
+  <h2 id="gameTitle">Your turn: real change, or just noise?</h2>
+  <p class="intro"><b>Part 2.</b> Above, nothing ever changed, and a yardstick built for yearly numbers flagged <span data-x="pm">…</span> of monthly readings in expectation. Here each month is judged the way an XmR chart judges it, and in half the rounds something really does change. Can you tell which?</p>
+  <ol class="howto">
+    <li><b>Read the chart.</b> The grey dots are last year's 12 months. They set the average line and the red limits: average ± 2.66 × the average month-to-month change. The 24 dark dots are this period, each one month's leavers × 12 ÷ headcount. A red dot falls outside the limits.</li>
+    <li><b>Make the call.</b> In half the rounds the true rate secretly moves up or down by 25% to 60% in some month between 7 and 18. In the other half it never moves. In stable, evaluable rounds, the simulated share of dark dots turning red is <span id="chanceRed">…</span>.</li>
+    <li><b>See the truth.</b> Answering reveals the true rate and what the three XmR rules would have flagged. The scoreboard then compares your calls with the rules.</li>
+  </ol>
+  <div class="game-body">
+    <div class="chartcol">
+      <p class="round" id="roundLine"></p>
+      <div id="gameChartBox"></div>
+      <ul class="legend game-legend" id="gameLegend" aria-label="Game chart key"></ul>
+      <p class="tinynote" id="unavailableNote" hidden>XmR unavailable: all 12 baseline counts are identical, so the moving range is zero. No XmR stability or change conclusion is available; human and oracle calls are still scored.</p>
+      <details><summary>Observed counts and annualized rates</summary><div class="tablewrap"><table id="observedTable"></table></div></details>
+      <p class="tinynote" id="rareNote" hidden>Fewer than one expected leaver per month: discrete counts make these XmR rules unreliable. A zero-moving-range baseline is not evaluable. Consider methods designed for rare events.</p>
+    </div>
+    <div class="side">
+      <div id="askPane" tabindex="0" aria-label="Answer this round; Y for change, N for noise">
+        <h3>Did the true turnover rate change during these 24 months?</h3>
+        <div class="choices" id="choices">
+          <button class="btn" type="button" data-guess="change"><span class="k" aria-hidden="true">Y</span>Yes, something changed</button>
+          <button class="btn" type="button" data-guess="noise"><span class="k" aria-hidden="true">N</span>No, it's just noise</button>
+        </div>
+        <p class="hint">The baseline rate is given above; any future change stays hidden until you answer.<span class="kbdhint"> Focus this answer area or a choice, then press <kbd>Y</kbd> or <kbd>N</kbd>.</span></p>
+      </div>
+      <div id="resultPane" hidden>
+        <div class="verdict" id="verdict" aria-live="polite"></div>
+        <button class="btn primary next" id="nextBtn" type="button">Next round</button>
+      </div>
+    </div>
+  </div>
+  <p class="fine" id="benchmarkStatus" role="status">Benchmark waiting…</p>
+  <details><summary>Detection timing benchmark</summary><p>Among evaluable changed rounds, signals before the change are false alarms. A pre-change-only signal counts as “changed” in classification but misses detection. Delay starts at zero in the change month; mean delay includes detected rounds only.</p><div class="tablewrap"><table id="detectionTable"></table></div><p id="benchmarkExclusions" class="fine"></p></details>
+  <div class="scoreboard" id="scoreboard" hidden>
+    <h3>Whole-dashboard classification scoreboard</h3>
+    <p class="sub" id="scoreSub"></p>
+    <div class="tablewrap"><table id="scoreTable"></table></div>
+    <p class="fine">Benchmark: 2,000 seeded rounds (seed 20260928) at your current settings. Round-level rates show numerator/denominator and Wilson 95% Monte Carlo intervals. These intervals describe simulation uncertainty, not model validity. Answering at random averages 50% in both classification columns; a handful of rounds proves little. Changing a setting starts a fresh scoreboard.</p>
+    <p class="fine">* Approximate oracle: knows the baseline rate and the change model, and weighs all 24 test months together using 64 midpoint quadrature points for the continuous uniform 25–60% shift prior in each direction. It is a model-specific reference, with numerical approximation error. XmR instead estimates its limits from only 12 baseline months.</p>
+    <p class="fine">XmR rules, as listed in <a href="https://blog-about-people-analytics.netlify.app/posts/2024-10-30-xmr-charts-in-people-analytics/" target="_blank" rel="noopener">Stehlík (2024)</a>: (1) a point outside the limits; (2) three of four successive points closer to the same limit than to the average; (3) eight successive points on the same side of the average. Limits here come from the grey baseline year only.</p>
+  </div>
+</section>
+
+<footer>
+  <p>The model: headcount stays constant because leavers are replaced; each person independently has the same monthly chance of leaving (annual rate ÷ 12); no seasonality and no clustered exits; quarters are annualized × 4 and months × 12. The annual rate means expected annual exits divided by headcount, not an original employee’s annual exit probability. Real processes may be more or less variable; these results depend on the stated model.</p>
+  <p>Interactive take on the Monte Carlo illustration credited to Lipinski (2017). Presenting? Press <kbd>Space</kbd> to run or pause.</p>
+</footer>
+</div>
+
+<dialog id="explainer" aria-labelledby="exTitle">
+  <div class="dlg">
+    <button class="btn icon-btn dlg-close" type="button" id="closeExplainer" aria-label="Close explainer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <h2 id="exTitle">What you're looking at</h2>
+    <p>Every panel measures one simulated company: <b data-x="N">1,000</b> people with a true turnover of <b data-x="p">10%</b> a year. Leavers are replaced and the rate never changes. Each replayed year is measured several ways at once, and every dot that drops is one number a dashboard would show.</p>
+
+    <h3>Why the readings spread out</h3>
+    <p>A turnover rate is a count of fairly rare events divided by headcount. How precise it is depends on how many leavers stand behind it, not on the calendar. Annualizing a month multiplies the number by 12, and it multiplies the wobble by 12 too.</p>
+    <p>Coin flips work the same way. In 12 flips, anything from 3 to 9 heads is normal. In 1,000 flips, 47% to 53% heads is normal. Judge 12-flip results against the 1,000-flip range and about 3 in 4 look abnormal. A narrow range belongs to a big sample; using it on a small one manufactures alarms.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>View</th><th>Expected leavers per reading</th><th>Typical swing (SD)</th><th>Readings outside the annual 2 SD band</th><th>Expected flagged readings/year</th><th>Outside own 2 SD band</th></tr></thead>
+        <tbody id="exTable"></tbody>
+      </table>
+    </div>
+    <p class="note">Exact binomial figures for your current settings. The swing grows with the square root of how many times a year you measure: quarterly is 2× the annual swing, monthly about 3.5×. The share outside the range can be above or below a bell-curve approximation because a monthly rate can only move in steps of one leaver (<span data-x="step">1.2</span> points here).</p>
+
+    <h3>Why it matters for people analytics</h3>
+    <p><b>False alarms.</b> Judge monthly numbers against a yearly sense of normal and about <span data-x="pm">60%</span> of months look like a problem in a company where nothing changed. Each one can start a meeting, a root-cause hunt, or an intervention.</p>
+    <p><b>Fake wins.</b> After an unusually bad month, the next one is usually closer to normal whatever you did. That is regression to the mean, and it makes the intervention look like it worked.</p>
+    <p><b>Small teams, same trap.</b> Under this equal-risk model, noise depends on expected leavers per reading, so smaller teams also produce less precise rates. A team of roughly <span data-x="team">83</span> people measured once a year is approximately as noisy as the whole company measured monthly (headcount is rounded). Small-team rankings can reflect substantial chance variation; actual differences require evidence.</p>
+    <p><b>Alarm fatigue.</b> A dashboard that is red half the time teaches leaders to ignore it, and that is when a real shift slips past.</p>
+
+    <h3>Looking often isn't the problem. The yardstick is.</h3>
+    <p>Frequent monitoring is how you catch a real change early. What goes wrong is judging small windows against annual-sized expectations. Better options, each with a price:</p>
+    <p><b>Rolling 12-month turnover.</b> Updates every month and is as steady as the annual number, but it reacts slowly. Adjacent windows share 11 of 12 months: their correlation is 11/12 in this independent, constant-rate model. Flagged readings therefore arrive in streaks, not independent alarms.</p>
+    <p><b>2 SD reference bands sized to the window.</b> The checkbox uses ±2 SD of each view’s own noise. The table shows exact discrete binomial probabilities at your settings, which need not be 5%. A conventional p-chart uses 3 SD control limits; this demonstration is not that chart. Wider bands reduce flags and can conceal small changes.</p>
+    <p><b>XmR charts (process behavior charts).</b> The limits come from your own recent data (average ± 2.66 × the average month-to-month change), and three simple rules tell you when to look closer, which makes them usable by non-technical colleagues. The game on this page uses them, following <a href="https://blog-about-people-analytics.netlify.app/posts/2024-10-30-xmr-charts-in-people-analytics/" target="_blank" rel="noopener">Stehlík (2024)</a>, and <a href="https://xmrit.com/t/" target="_blank" rel="noopener">Xmrit</a> draws them for free. They still raise false alarms: with only one year of baseline, the three rules fire on about <span data-x="xmrFA">41%</span> of evaluable stable two-year dashboards in the game, while giving no signal at or after the change in about <span data-x="xmrMiss">…</span> of evaluable changed rounds. These are different questions from whole-dashboard classification. A zero-moving-range baseline is unavailable and excluded from XmR denominators.</p>
+    <p><b>Counts with a range beat bare rates.</b> "<span data-x="exCount">13 leavers</span> this month, and <span data-x="exRange">3 to 14</span> is normal" is much harder to overreact to than "annualized turnover hit <span data-x="exRate">15.6%</span>".</p>
+    <p><b>Pool or shrink small units before ranking them</b>, for example with partial pooling or Bayesian small-area estimates.</p>
+
+    <h3>What the simulation assumes</h3>
+    <p>Constant headcount, because leavers are replaced. Every person independently has the same <span data-x="pm12">0.83%</span> chance of leaving in any month. No seasonality, no clustered exits such as reorganizations, and simple annualization. Annual turnover here means expected annual exits divided by headcount. An original employee’s probability of leaving within a year is 1 − (1 − monthly chance)¹². Real processes may be more or less variable than this model.</p>
+    <p class="note">Interactive take on the Monte Carlo illustration credited to Lipinski (2017).</p>
+  </div>
+</dialog>
+
+<script id="turnover-model">
+const TurnoverModel = (() => {
+'use strict';
+const LG = [0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+function lgamma(x){
+  if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - lgamma(1 - x);
+  x -= 1; let a = LG[0]; const t = x + 7.5;
+  for (let i = 1; i < 9; i++) a += LG[i] / (x + i);
+  return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+}
+const logPmf = (k, n, q) => lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1) + k * Math.log(q) + (n - k) * Math.log1p(-q);
+// exact binomial draw by skipping geometric gaps between successes; expected work ~ n*q
+function binom(n, q, rng = Math.random){
+  if (q <= 0) return 0;
+  if (q >= 1) return n;
+  if (q > 0.5) return n - binom(n, 1 - q, rng);
+  const lq = Math.log1p(-q); let x = 0, pos = 0;
+  for (;;) { pos += Math.floor(Math.log(1 - rng()) / lq) + 1; if (pos > n) return x; x++; }
+}
+function niceStep(x){
+  const c = [0.5, 1, 2, 2.5, 5, 10, 20, 25, 50];
+  for (const s of c) if (s >= x) return s;
+  return 100;
+}
+const VIEWS = [
+  { key:'annual',    title:'Annual',                g:1,  nMult:12, perYear:1 },
+  { key:'quarterly', title:'Quarterly, annualized', g:4,  nMult:3,  perYear:4 },
+  { key:'monthly',   title:'Monthly, annualized',   g:12, nMult:1,  perYear:12 },
+  { key:'rolling',   title:'Rolling 12-month',      g:1,  nMult:12, perYear:12 }
+];
+function createModel(N, p){
+  const q = p / 12, Np = N * p;
+  const sdA = Math.sqrt(12 * N * q * (1 - q));
+  const sdM = 12 * Math.sqrt(N * q * (1 - q));
+  const h = Math.max(4.2 * sdM, 0.6 * Np);
+  const loP = Math.max(0, Np - h) / N * 100, hiP = (Np + h) / N * 100;
+  const step = niceStep((hiP - loP) / 5);
+  const dLoP = Math.max(0, Math.floor(loP / step) * step), dHiP = Math.ceil(hiP / step) * step;
+  const dLo = dLoP * N / 100, dHi = dHiP * N / 100;
+  const targetW = (dHi - dLo) / 64;
+  const shared = { lo: Np - 2 * sdA, hi: Np + 2 * sdA };
+  const views = {};
+  let monthQ = null;
+  for (const v of VIEWS){
+    let m = Math.max(1, Math.ceil(targetW / v.g - 1e-9)); if (m % 2 === 0) m++;   // odd multiples keep bins centred on attainable values
+    const W = v.g * m;
+    const bMin = Math.floor((dLo + W / 2) / W), bMax = Math.floor((dHi + W / 2) / W);
+    const nb = bMax - bMin + 1;
+    const n = v.nMult * N, mean = n * q, sd = Math.sqrt(n * q * (1 - q));
+    const sdU = v.g * sd;
+    const own = { lo: Np - 2 * sdU, hi: Np + 2 * sdU };
+    const expBins = new Float64Array(nb);
+    let outS = 0, outO = 0, tot = 0, cdf = 0, qLo = null, qHi = null;
+    const kLo = Math.max(0, Math.floor(mean - 14 * sd - 5)), kHi = Math.min(n, Math.ceil(mean + 14 * sd + 5));
+    for (let k = kLo; k <= kHi; k++){
+      const pk = Math.exp(logPmf(k, n, q)); tot += pk; cdf += pk;
+      if (qLo === null && cdf >= 0.025) qLo = k;
+      if (qHi === null && cdf >= 0.975) qHi = k;
+      const u = v.g * k;
+      if (u < shared.lo || u > shared.hi) outS += pk;
+      if (u < own.lo || u > own.hi) outO += pk;
+      const b = Math.floor((u + W / 2) / W) - bMin;
+      if (b >= 0 && b < nb) expBins[b] += pk;
+    }
+    const rest = Math.max(0, 1 - tot); outS += rest; outO += rest;
+    const Wpct = W / N * 100;
+    let expMaxDens = 0; for (let i = 0; i < nb; i++) expMaxDens = Math.max(expMaxDens, expBins[i] / Wpct);
+    views[v.key] = Object.assign({}, v, { W, bMin, nb, sdU, own, pOutShared: outS, pOutOwn: outO, expBins, Wpct, expMaxDens, expLeavers: mean });
+    if (v.key === 'monthly') monthQ = { lo: qLo, hi: qHi };
+  }
+  return { N, p, q, Np, sdA, dLo, dHi, dLoP, dHiP, step, shared, views, monthQ };
+}
+
+// one round: 12 baseline months (always at the base rate) + 24 test months
+function makeRound(N, p, rng = Math.random){
+  let change = null;
+  if (rng() < 0.5){
+    const month = 7 + Math.floor(rng() * 12);           // month 7..18
+    const delta = 0.25 + rng() * 0.35;                   // 25% to 60% relative shift
+    const up = rng() < 0.5;
+    const to = Math.min(0.95, Math.max(0.005, p * (up ? 1 + delta : 1 - delta)));
+    change = { month, from: p, to };
+  }
+  const X = [];
+  for (let t = 0; t < 36; t++){
+    const d = t - 11;                                            // test month 1..24 for t = 12..35
+    const rate = change && d >= change.month ? change.to : p;
+    X.push(binom(N, rate / 12, rng));
+  }
+  return { X, change };
+}
+
+
+// Integer-domain strict comparisons prevent floating-point ties becoming signals.
+function xmrOf(X, N){
+  const counts = X.slice(0, 12), values = X.slice(12), n = values.length;
+  const S = counts.reduce((a,b) => a+b, 0);
+  let R = 0; for (let k=1;k<12;k++) R += Math.abs(counts[k]-counts[k-1]);
+  const scale = 12/N, m = S/12*scale, mr = R/11*scale;
+  const U = m+2.66*mr, L=m-2.66*mr, Hu=m+1.33*mr, Hl=m-1.33*mr;
+  const evaluable = R > 0, r1 = new Array(n).fill(false), runPts=new Array(n).fill(false), events=[];
+  const high = x => 3300*x > 275*S+399*R;
+  const low = x => 3300*x < 275*S-399*R;
+  if (evaluable) for(let j=0;j<n;j++){
+    r1[j] = 3300*values[j] > 275*S+798*R || 3300*values[j] < 275*S-798*R;
+    if(r1[j]) events.push({j,rule:'r1'});
+    if(j>=3){
+      const window=values.slice(j-3,j+1), hi=window.filter(high).length, lo=window.filter(low).length;
+      if(hi>=3 || lo>=3){ events.push({j,rule:'r2'}); for(let k=j-3;k<=j;k++) if((hi>=3 && high(values[k])) || (lo>=3 && low(values[k]))) runPts[k]=true; }
+    }
+    if(j>=7){
+      const window=values.slice(j-7,j+1);
+      if(window.every(x=>12*x>S) || window.every(x=>12*x<S)){ events.push({j,rule:'r3'}); for(let k=j-7;k<=j;k++) runPts[k]=true; }
+    }
+  }
+  const y=X.map(x=>x*scale);
+  return {y,base:y.slice(0,12),test:y.slice(12),m,mr,U,L,Hu,Hl,S,R,evaluable,r1,runPts,events};
+}
+function summarizeEvents(events, change){
+  const cut=change ? change.month-1 : null;
+  const before=change ? events.find(e=>e.j<cut) : events[0];
+  const after=change ? events.find(e=>e.j>=cut) : null;
+  return {any:events.length>0, prechange:!!before, detected:!!after,
+    noPostSignal:!!change && !after, delay:after ? after.j-cut : null};
+}
+// Likelihood ratios cancel the binomial coefficient. The midpoint rule integrates
+// the actual continuous uniform shift prior; points controls convergence checks.
+function idealTables(N,p,K,points=64){
+  const q=p/12, variants=[];
+  for(let i=0;i<points;i++) for(const sign of [1,-1]){
+    const d=0.25+0.35*(i+0.5)/points;
+    const rt=Math.min(0.95,Math.max(0.005,p*(1+sign*d)))/12;
+    variants.push({a:Math.log(rt/q)-Math.log((1-rt)/(1-q)),b:N*Math.log((1-rt)/(1-q))});
+  }
+  return {N,p,points,variants};
+}
+function idealLogBF(counts,tabs){
+  const suffix=new Array(counts.length+1).fill(0);
+  for(let k=counts.length-1;k>=0;k--) suffix[k]=suffix[k+1]+counts[k];
+  const vals=[];let mx=-Infinity;
+  for(const v of tabs.variants) for(let c=7;c<=18;c++){
+    const ll=v.a*suffix[c-1]+v.b*(counts.length-c+1);vals.push(ll);mx=Math.max(mx,ll);
+  }
+  let sum=0;for(const v of vals) sum+=Math.exp(v-mx);
+  return mx+Math.log(sum/vals.length);
+}
+function idealSaysChange(counts,tabs){return idealLogBF(counts,tabs)>0;}
+function idealFor(counts,N,p,points=64){return idealSaysChange(counts,idealTables(N,p,0,points));}
+function seededRng(seed){
+  let a=seed>>>0;
+  return () => {a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};
+}
+function wilson(k,n){
+  if(!n) return [null,null];
+  const z=1.959963984540054,p=k/n,d=1+z*z/n,mid=(p+z*z/(2*n))/d;
+  const half=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;
+  return [k===0?0:Math.max(0,mid-half),k===n?1:Math.min(1,mid+half)];
+}
+function rateMetric(numerator,denominator){return {numerator,denominator,rate:denominator?numerator/denominator:null,ci:wilson(numerator,denominator)};}
+function createBenchmark(N,p,seed=20260928){
+  const rng=seededRng(seed),tabs=idealTables(N,p,0);
+  let rounds=0,stable=0,changed=0,evaluableStable=0,evaluableChanged=0,degenerate=0,red=0;
+  const counts={fa1:0,faA:0,faI:0,mi1:0,miA:0,miI:0};
+  const detect={rule1:{pre:0,miss:0,detected:0,delay:0},combined:{pre:0,miss:0,detected:0,delay:0}};
+  function add(rd){
+    rounds++;const xm=xmrOf(rd.X,N),id=idealSaysChange(rd.X.slice(12),tabs),ch=!!rd.change;
+    if(ch){changed++;if(!id)counts.miI++;}else{stable++;if(id)counts.faI++;}
+    if(!xm.evaluable){degenerate++;return;}
+    const one=xm.events.filter(e=>e.rule==='r1'),all=xm.events;
+    if(ch){
+      evaluableChanged++;if(!one.length)counts.mi1++;if(!all.length)counts.miA++;
+      for(const [name,events] of [['rule1',one],['combined',all]]){
+        const e=summarizeEvents(events,rd.change),d=detect[name];
+        if(e.prechange)d.pre++;if(e.noPostSignal)d.miss++;if(e.detected){d.detected++;d.delay+=e.delay;}
+      }
+    }else{evaluableStable++;if(one.length)counts.fa1++;if(all.length)counts.faA++;red+=one.length;}
+  }
+  function result(){
+    const metrics={};for(const k of Object.keys(counts)) metrics[k]=rateMetric(counts[k],k.endsWith('I')?(k.startsWith('fa')?stable:changed):(k.startsWith('fa')?evaluableStable:evaluableChanged));
+    const detection={};for(const [k,d] of Object.entries(detect)) detection[k]={prechangeFalseAlarm:rateMetric(d.pre,evaluableChanged),postChangeNoSignal:rateMetric(d.miss,evaluableChanged),meanDelay:d.detected?d.delay/d.detected:null,detected:d.detected,totalDelay:d.delay};
+    return {seed,rounds,stable,changed,evaluableStable,evaluableChanged,degenerate,metrics,detection,
+      ...Object.fromEntries(Object.entries(metrics).map(([k,v])=>[k,v.rate])),pointRate:evaluableStable?red/(24*evaluableStable):null,pointNumerator:red,pointDenominator:24*evaluableStable};
+  }
+  return {step(){add(makeRound(N,p,rng));},add,result};
+}
+function longRun(N,p,R,seed=20260928){const b=createBenchmark(N,p,seed);for(let i=0;i<R;i++)b.step();return b.result();}
+// One bounded unit at a time; cancellation is checked before every unit and callback.
+function createBudgetJob({step,total,budget=8,now=()=>performance.now(),schedule=fn=>setTimeout(fn,0),unschedule=id=>clearTimeout(id),progress=()=>{},done=()=>{}}){
+  let cancelled=false,completed=0,handle=null;
+  function tick(){
+    if(cancelled)return;const start=now();
+    while(!cancelled && completed<total){step(completed);completed++;if(now()-start>=budget)break;}
+    if(cancelled)return;progress(completed,total);
+    if(!cancelled && completed===total){done();}else if(!cancelled){handle=schedule(tick);}
+  }
+  handle=schedule(tick);
+  return {cancel(){cancelled=true;if(handle!==null)unschedule(handle);},get completed(){return completed;}};
+}
+
+return {binom,seededRng,makeRound,xmrOf,summarizeEvents,idealTables,idealLogBF,idealSaysChange,idealFor,createModel,createBenchmark,longRun,wilson,createBudgetJob,lgamma,logPmf,VIEWS,niceStep};
+})();
+</script>
+<script>
+(() => {
+'use strict';
+const {binom,seededRng,makeRound,xmrOf,summarizeEvents,idealTables,idealLogBF,idealSaysChange,idealFor,createModel,createBenchmark,longRun,wilson,createBudgetJob,lgamma,logPmf,VIEWS,niceStep} = TurnoverModel;
+
+/* ---------- theme ---------- */
+const root = document.documentElement;
+const THEME_KEY = 'turnover-noise-theme';
+const readStored = () => { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } };
+const writeStored = v => { try { localStorage.setItem(THEME_KEY, v); } catch (e) {} };
+(function initTheme(){
+  const s = readStored();
+  if (s === 'dark' || s === 'light') root.setAttribute('data-theme', s);
+  else if (!root.hasAttribute('data-theme')) root.setAttribute('data-theme', 'light');
+})();
+const SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7L7 17M17 7l1.7-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 0 1 9.4 4a8.2 8.2 0 1 0 10.6 10.6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+const themeBtn = document.getElementById('themeBtn');
+function isDark(){
+  const t = root.getAttribute('data-theme');
+  if (t) return t === 'dark';
+  return matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function paintThemeBtn(){
+  const dark = isDark();
+  themeBtn.innerHTML = dark ? SUN : MOON;
+  themeBtn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+}
+themeBtn.addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  writeStored(next);
+  paintThemeBtn(); readPalette(); dirty = true; renderGame();
+});
+
+const fmtInt = n => Math.round(n).toLocaleString('en-US');
+function fmtPct(x, forceDec){
+  if (x == null || !Number.isFinite(x)) return 'unavailable';
+  const v = x * 100;
+  if (forceDec != null) return v.toFixed(forceDec) + '%';
+  if (v >= 10 || v === 0) return Math.round(v) + '%';
+  return v.toFixed(1) + '%';
+}
+const fmtPP = v => (v < 0.95 ? v.toFixed(2) : v.toFixed(1)) + ' pp';
+
+/* ---------- views ---------- */
+// u = "annual-equivalent leavers". Each view's count ~ Binomial(nMult * N, p/12); u = g * count.
+const HEADCOUNTS = [50,100,200,300,500,750,1000,1500,2000,3000,5000,7500,10000];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const state = { N:1000, p:0.10, running:false, speed:'slow', fixRolling:false, fixLimits:false, years:0 };
+let model = null, panels = {}, dots = [], yMax = {}, pal = {}, dirty = true;   // yMax: one height scale per panel
+
+function setupModel(){ model = createModel(state.N, state.p); }
+
+function freshPanels(){
+  panels = {};
+  for (const v of VIEWS){
+    const nb = model.views[v.key].nb;
+    panels[v.key] = { bins: new Uint32Array(nb), binOutS: new Uint32Array(nb), binOutO: new Uint32Array(nb), n:0, s1:0, s2:0, outS:0, outO:0, off:0, maxBin:0 };
+  }
+  dots = []; state.years = 0;
+}
+function addReading(key, u){
+  const P = panels[key], V = model.views[key];
+  P.n++; const d = u - model.Np; P.s1 += d; P.s2 += d * d;
+  const oS = u < model.shared.lo || u > model.shared.hi, oO = u < V.own.lo || u > V.own.hi;
+  if (oS) P.outS++;
+  if (oO) P.outO++;
+  const b = Math.floor((u + V.W / 2) / V.W) - V.bMin;
+  if (b < 0 || b >= V.nb) P.off++;
+  else {
+    const c = ++P.bins[b]; if (c > P.maxBin) P.maxBin = c;
+    if (oS) P.binOutS[b]++;
+    if (oO) P.binOutO[b]++;
+  }
+}
+// one replayed year: 24 months simulated so the rolling view has a full 12-month window from month 1
+function simYear(){
+  const N = state.N, q = model.q, X = new Array(24);
+  for (let i = 0; i < 24; i++) X[i] = binom(N, q);
+  let a = 0; for (let i = 12; i < 24; i++) a += X[i];
+  const quarterly = [];
+  for (let k = 0; k < 4; k++) quarterly.push(4 * (X[12 + 3 * k] + X[13 + 3 * k] + X[14 + 3 * k]));
+  const monthly = []; for (let i = 12; i < 24; i++) monthly.push(12 * X[i]);
+  const rolling = []; let r = 0; for (let i = 1; i <= 12; i++) r += X[i]; rolling.push(r);
+  for (let i = 13; i < 24; i++){ r += X[i] - X[i - 12]; rolling.push(r); }
+  return { annual:[a], quarterly, monthly, rolling };
+}
+function addYearInstant(){
+  const r = simYear(); state.years++;
+  for (const k in r) for (const u of r[k]) addReading(k, u);
+}
+function spawnYear(){
+  const r = simYear(); state.years++;
+  const step = 0.045;
+  const push = (k, u, slot) => {
+    if (k === 'rolling' && !state.fixRolling){ addReading(k, u); return; }
+    const V = model.views[k];
+    const b = Math.floor((u + V.W / 2) / V.W) - V.bMin;
+    if (b < 0 || b >= V.nb){ addReading(k, u); return; }
+    dots.push({ k, u, b, jit: (Math.random() - 0.5) * 0.5, y: 2, v: 0, delay: slot * step });
+  };
+  // readings drop when they would be published: months as they close, quarters at quarter-end, the annual number at year-end
+  r.monthly.forEach((u, j) => push('monthly', u, j));
+  r.rolling.forEach((u, j) => push('rolling', u, j));
+  r.quarterly.forEach((u, j) => push('quarterly', u, 3 * j + 2));
+  push('annual', r.annual[0], 11);
+}
+
+/* ---------- drawing ---------- */
+function readPalette(){
+  const cs = getComputedStyle(root);
+  const g = n => cs.getPropertyValue(n).trim();
+  pal = { ink:g('--ink'), muted:g('--muted'), faint:g('--faint'), rule:g('--rule'), line:g('--line'), bar:g('--bar'), alarm:g('--alarm'), alarmWash:g('--alarm-wash'), fix:g('--fix'), paper:g('--paper') };
+}
+const canvases = {};
+document.querySelectorAll('.panel').forEach(fig => {
+  const c = fig.querySelector('canvas');
+  canvases[fig.dataset.key] = { el:c, ctx:c.getContext('2d'), w:0, h:0, fig };
+});
+function sizeCanvases(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  for (const k in canvases){
+    const C = canvases[k]; const r = C.el.getBoundingClientRect();
+    if (!r.width) { C.w = 0; continue; }
+    C.w = r.width; C.h = r.height;
+    C.el.width = Math.round(r.width * dpr); C.el.height = Math.round(r.height * dpr);
+    C.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  dirty = true;
+}
+const visibleKeys = () => VIEWS.map(v => v.key).filter(k => k !== 'rolling' || state.fixRolling);
+const M = { l:8, r:8, t:24, b:26 };
+function geom(key){
+  const C = canvases[key];
+  const pw = C.w - M.l - M.r, ph = C.h - M.t - M.b;
+  const xOf = u => M.l + (u - model.dLo) / (model.dHi - model.dLo) * pw;
+  const yOf = d => M.t + ph - Math.min(d / yMax[key], 1) * ph;
+  return { C, pw, ph, xOf, yOf };
+}
+// each panel gets its own height scale: tall enough for the expected shape and for the observed bars
+function yTargetFor(k){
+  const V = model.views[k], P = panels[k];
+  let t = V.expMaxDens * 1.15;
+  if (P.n) t = Math.max(t, P.maxBin / P.n / V.Wpct * 1.06);
+  return t || 1;
+}
+function resetY(){ for (const v of VIEWS) yMax[v.key] = yTargetFor(v.key); }
+function bandFor(key){ return state.fixLimits ? model.views[key].own : model.shared; }
+
+function drawPanel(key){
+  const V = model.views[key], P = panels[key];
+  const { C, pw, ph, xOf, yOf } = geom(key);
+  if (!C.w) return;
+  const ctx = C.ctx, w = C.w, h = C.h, base = M.t + ph;
+  ctx.clearRect(0, 0, w, h);
+  const band = bandFor(key);
+  const xlo = Math.max(M.l, Math.min(M.l + pw, xOf(band.lo)));
+  const xhi = Math.max(M.l, Math.min(M.l + pw, xOf(band.hi)));
+
+  // alarm zones
+  ctx.fillStyle = pal.alarmWash;
+  if (xlo > M.l) ctx.fillRect(M.l, M.t, xlo - M.l, ph);
+  if (xhi < M.l + pw) ctx.fillRect(xhi, M.t, M.l + pw - xhi, ph);
+
+  // bars (share of readings per percentage point, identical scale across panels);
+  // the red part of each bar is the share of that bin's readings that fall outside the normal range
+  const dens = i => P.n ? P.bins[i] / P.n / V.Wpct : 0;
+  const binOut = state.fixLimits ? P.binOutO : P.binOutS;
+  const baseColor = key === 'rolling' ? pal.fix : pal.bar;
+  {
+    for (let i = 0; i < V.nb; i++){
+      if (!P.bins[i]) continue;
+      const cU = (V.bMin + i) * V.W;
+      let x0 = Math.max(M.l, xOf(cU - V.W / 2)), x1 = Math.min(M.l + pw, xOf(cU + V.W / 2));
+      if (x1 <= x0) continue;
+      const gap = (x1 - x0) > 5 ? 1 : 0;
+      const y = yOf(dens(i));
+      const outFrac = binOut[i] / P.bins[i];
+      if (outFrac < 1){ ctx.fillStyle = baseColor; ctx.fillRect(x0 + gap / 2, y, x1 - x0 - gap, base - y); }
+      if (outFrac > 0){ const yr = base - outFrac * (base - y); ctx.fillStyle = pal.alarm; ctx.fillRect(x0 + gap / 2, yr, x1 - x0 - gap, base - yr); }
+      if (dens(i) > yMax[key] * 1.001 && x1 - x0 > 5){   // briefly taller than the panel while the scale catches up: mark the cut
+        const cx = (x0 + x1) / 2, hw = Math.min(4, (x1 - x0) / 2 - 1);
+        const prev = ctx.fillStyle; ctx.fillStyle = pal.paper;
+        ctx.beginPath(); ctx.moveTo(cx - hw, y + 7); ctx.lineTo(cx, y + 2); ctx.lineTo(cx + hw, y + 7); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = prev;
+      }
+    }
+  }
+
+  // expected shape
+  ctx.strokeStyle = pal.faint; ctx.lineWidth = 1.25; ctx.beginPath();
+  let started = false;
+  for (let i = 0; i < V.nb; i++){
+    const cU = (V.bMin + i) * V.W;
+    const x0 = Math.max(M.l, xOf(cU - V.W / 2)), x1 = Math.min(M.l + pw, xOf(cU + V.W / 2));
+    if (x1 <= x0) continue;
+    const y = yOf(V.expBins[i] / V.Wpct);
+    if (!started){ ctx.moveTo(x0, base); started = true; }
+    ctx.lineTo(x0, y); ctx.lineTo(x1, y);
+  }
+  ctx.stroke();
+
+  // true rate
+  const xt = xOf(model.Np);
+  ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = pal.ink; ctx.lineWidth = 1.25;
+  ctx.beginPath(); ctx.moveTo(xt, M.t - 4); ctx.lineTo(xt, base); ctx.stroke(); ctx.restore();
+
+  // normal range edges
+  ctx.strokeStyle = pal.alarm; ctx.lineWidth = 2.25;
+  ctx.font = '12px "Atkinson Hyperlegible", system-ui, sans-serif'; ctx.fillStyle = pal.alarm; ctx.textBaseline = 'alphabetic';
+  const rawLo = xOf(band.lo), rawHi = xOf(band.hi);
+  if (rawLo >= M.l && rawLo <= M.l + pw){
+    ctx.beginPath(); ctx.moveTo(rawLo, M.t - 8); ctx.lineTo(rawLo, base); ctx.stroke();
+    if (rawLo - 5 > 34){ ctx.textAlign = 'right'; ctx.fillText('−2 SD', rawLo - 5, M.t - 9); }
+    else { ctx.textAlign = 'left'; ctx.fillText('−2 SD', rawLo + 5, M.t - 9); }
+  }
+  if (rawHi >= M.l && rawHi <= M.l + pw){
+    ctx.beginPath(); ctx.moveTo(rawHi, M.t - 8); ctx.lineTo(rawHi, base); ctx.stroke();
+    if (rawHi + 5 < w - 34){ ctx.textAlign = 'left'; ctx.fillText('+2 SD', rawHi + 5, M.t - 9); }
+    else { ctx.textAlign = 'right'; ctx.fillText('+2 SD', rawHi - 5, M.t - 9); }
+  }
+
+  // axis
+  ctx.strokeStyle = pal.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(M.l, base + 0.5); ctx.lineTo(M.l + pw, base + 0.5); ctx.stroke();
+  ctx.fillStyle = pal.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const st = model.step, dec = st % 1 ? 1 : 0;
+  // labels: first flush-left, last flush-right, others centred; skip any that would collide
+  const ticks = [];
+  for (let t = model.dLoP; t <= model.dHiP + 1e-9; t += st) ticks.push(t);
+  let lastX = -1e9;
+  ticks.forEach((t, i) => {
+    const x = xOf(t * model.N / 100);
+    ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, base + 4); ctx.stroke();
+    const label = t.toFixed(dec) + '%';
+    const tw = ctx.measureText(label).width;
+    const first = i === 0, last = i === ticks.length - 1;
+    const left = first ? x : last ? x - tw : x - tw / 2;
+    const lastRight = ticks.length > 1 ? xOf(ticks[ticks.length - 1] * model.N / 100) - ctx.measureText(ticks[ticks.length - 1].toFixed(dec) + '%').width : 1e9;
+    if (left < lastX + 3) return;
+    if (!last && left + tw > lastRight - 3) return;
+    ctx.textAlign = first ? 'left' : last ? 'right' : 'center';
+    ctx.fillText(label, x, base + 7); lastX = left + tw;
+  });
+  if (P.off){
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillStyle = pal.muted;
+    ctx.fillText(fmtInt(P.off) + ' off the chart', M.l + pw, M.t + 2);
+  }
+
+  // falling dots
+  for (const d of dots){
+    if (d.k !== key || d.delay > 0) continue;
+    const cU = (V.bMin + d.b) * V.W;
+    const bw = Math.max(0, xOf(cU + V.W / 2) - xOf(cU - V.W / 2));
+    const x = xOf(cU) + d.jit * Math.min(bw, 16);
+    const out = d.u < band.lo || d.u > band.hi;
+    ctx.fillStyle = out ? pal.alarm : (key === 'rolling' ? pal.fix : pal.bar);
+    ctx.beginPath(); ctx.arc(x, d.y, 3.2, 0, Math.PI * 2); ctx.fill();
+  }
+
+  if (!P.n && !dots.some(d => d.k === key)){
+    ctx.fillStyle = pal.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '14px "Atkinson Hyperlegible", system-ui, sans-serif';
+    ctx.fillText('No readings yet. Press Run.', M.l + pw / 2, M.t + ph * 0.42);
+  }
+}
+function drawAll(){ for (const k of visibleKeys()) drawPanel(k); }
+
+function landDots(){
+  if (!dots.length) return;
+  const keep = [];
+  for (const d of dots){
+    if (d.delay > 0){ keep.push(d); continue; }
+    const C = canvases[d.k];
+    if (!C.w || (d.k === 'rolling' && !state.fixRolling)){ addReading(d.k, d.u); continue; }
+    const { yOf } = geom(d.k);
+    const P = panels[d.k], V = model.views[d.k];
+    const top = yOf(P.n ? P.bins[d.b] / P.n / V.Wpct : 0);
+    if (d.y >= top - 3){ addReading(d.k, d.u); } else keep.push(d);
+  }
+  dots = keep;
+}
+
+/* ---------- stats ---------- */
+const figs = {};
+document.querySelectorAll('.panel').forEach(f => { figs[f.dataset.key] = { pct: f.querySelector('[data-f="pct"]'), detail: f.querySelector('[data-f="detail"]'), canvas: f.querySelector('canvas') }; });
+function updateStats(){
+  document.getElementById('yearsOut').textContent = fmtInt(state.years);
+  for (const v of VIEWS){
+    const key = v.key, V = model.views[key], P = panels[key], F = figs[key];
+    const pTheory = state.fixLimits ? V.pOutOwn : V.pOutShared;
+    const out = state.fixLimits ? P.outO : P.outS;
+    const pObs = P.n ? out / P.n : null;
+    const shown = pObs == null ? pTheory : pObs;
+    F.pct.textContent = pObs == null ? '–' : fmtPct(pObs);
+    F.pct.classList.toggle('hot', shown > 0.1);
+    const sdTheory = V.sdU / model.N * 100;
+    let sdObs = null;
+    if (P.n > 1){ const mean = P.s1 / P.n; sdObs = Math.sqrt(Math.max(0, (P.s2 - P.n * mean * mean) / (P.n - 1))) / model.N * 100; }
+    const alarms = v.perYear * pTheory;
+    const alarmTxt = alarms < 0.095 ? alarms.toFixed(2) : alarms.toFixed(1);
+    let html = `Exact math expects <b>${fmtPct(pTheory, 1)}</b>, about <b>${alarmTxt}</b> expected flagged readings/year${key === 'rolling' ? ', arriving in streaks' : ''}.<br>`;
+    html += `Spread (SD): <b>${sdObs == null ? '–' : fmtPP(sdObs)}</b> observed, ${fmtPP(sdTheory)} expected.`;
+    F.detail.innerHTML = html;
+    F.canvas.setAttribute('aria-label', `${v.title}: ${P.n ? fmtPct(pObs) + ' of ' + fmtInt(P.n) + ' readings' : 'no readings yet; ' + fmtPct(pTheory, 1) + ' expected'} outside the reference band. Spread ${fmtPP(sdTheory)} expected.`);
+  }
+  document.getElementById('legendBand').textContent = state.fixLimits
+    ? '2 SD reference band: true rate ± 2 SD of each view\'s own noise'
+    : '2 SD reference band: true rate ± 2 SD of the annual number';
+}
+
+/* ---------- loop ---------- */
+let lastT = performance.now(), lastSpawn = -1e9, lastStats = 0, statsDirty = true;
+function frame(t){
+  const dt = Math.min(0.05, Math.max(0, (t - lastT) / 1000)); lastT = t;
+  if (state.running){
+    if (state.speed === 'slow'){
+      if (t - lastSpawn >= 760){ lastSpawn = t; if (reduceMotion) addYearInstant(); else spawnYear(); dirty = true; }
+    } else { const start = performance.now(); do { addYearInstant(); } while (performance.now() - start < 6); dirty = true; }
+    statsDirty = true;
+  }
+  if (dots.length){
+    for (const d of dots){ if (d.delay > 0) d.delay -= dt; else { d.v += 2300 * dt; d.y += d.v * dt; } }
+    landDots(); dirty = true; statsDirty = true;
+  }
+  for (const k of visibleKeys()){
+    const target = yTargetFor(k);
+    if (Math.abs(target - yMax[k]) > target * 0.002){ yMax[k] += (target - yMax[k]) * (1 - Math.exp(-dt * 7)); dirty = true; }
+  }
+  if (dirty){ drawAll(); dirty = false; }
+  if (statsDirty && t - lastStats > 120){ lastStats = t; updateStats(); statsDirty = false; }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- controls ---------- */
+const $ = id => document.getElementById(id);
+const runBtn = $('runBtn');
+function setRunning(on){
+  if (on && addJob) cancelAdd();
+  state.running = on;
+  runBtn.textContent = on ? 'Pause' : 'Run';
+  runBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  if (on) lastSpawn = -1e9;
+}
+runBtn.addEventListener('click', () => setRunning(!state.running));
+document.querySelectorAll('.run .seg button').forEach(b => b.addEventListener('click', () => {
+  state.speed = b.dataset.speed;
+  document.querySelectorAll('.run .seg button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+}));
+let addJob = null;
+function cancelAdd(){ if(addJob) addJob.cancel(); addJob=null; $('addBtn').disabled=false; $('addBtn').textContent='Add 1,000 years'; }
+$('addBtn').addEventListener('click', () => {
+  cancelAdd(); setRunning(false);
+  // Finish already-counted animated years once, then add exactly 1,000.
+  for(const d of dots) addReading(d.k,d.u); dots=[];
+  $('addBtn').disabled=true;
+  addJob=createBudgetJob({total:1000,step:addYearInstant,
+    progress:n=>{dirty=true;statsDirty=true;$('addBtn').textContent=`Adding ${fmtInt(n)} / 1,000…`;},
+    done:()=>{cancelAdd();updateStats();}});
+});
+$('clearBtn').addEventListener('click', () => { cancelAdd(); setRunning(false); freshPanels(); resetY(); dirty = true; updateStats(); });
+
+function syncText(){
+  const N = state.N, p = state.p, V = model.views;
+  document.querySelectorAll('[data-x="N"]').forEach(e => e.textContent = fmtInt(N));
+  document.querySelectorAll('[data-x="p"]').forEach(e => e.textContent = fmtPct(p));
+  const set = (k, v) => document.querySelectorAll(`[data-x="${k}"]`).forEach(e => e.textContent = v);
+  set('pm', fmtPct(V.monthly.pOutShared));
+  set('team', fmtInt(Math.max(1, N / 12)));
+  set('pm12', (p / 12 * 100).toFixed(2) + '%');
+  set('step', (12 / N * 100).toFixed(N >= 1200 ? 2 : 1));
+  const mq = model.monthQ;
+  const ex = Math.max(1, mq.hi - 1);
+  set('exCount', `${ex} leaver${ex === 1 ? '' : 's'}`);
+  set('exRange', `${mq.lo} to ${mq.hi}`);
+  set('exRate', fmtPct(ex * 12 / N, 1));
+  const rows = [
+    ['Annual', 'annual'], ['Quarterly, annualized', 'quarterly'], ['Monthly, annualized', 'monthly'], ['Rolling 12\u2011month', 'rolling']
+  ].map(([label, k]) => {
+    const v = V[k]; const al = v.perYear * v.pOutShared;
+    const hot = v.pOutShared > 0.1 ? ' class="hot"' : '';
+    return `<tr><td>${label}</td><td>${v.expLeavers < 10 ? v.expLeavers.toFixed(1) : fmtInt(v.expLeavers)}</td><td>${fmtPP(v.sdU / N * 100)}</td><td${hot}>${fmtPct(v.pOutShared, 1)}</td><td>${al < 0.095 ? al.toFixed(2) : al.toFixed(1)}</td><td>${fmtPct(v.pOutOwn, 2)}</td></tr>`;
+  }).join('');
+  $('exTable').innerHTML = rows;
+}
+
+function applyParams(){
+  cancelAdd();
+  setupModel(); freshPanels(); resetY(); syncText(); dirty = true; updateStats();
+  game.hist = []; game.round = 0; renderScore(); newGame(false); scheduleLongRun();
+}
+const hc = $('headcount'), rt = $('rate');
+hc.addEventListener('input', () => {
+  state.N = HEADCOUNTS[+hc.value];
+  $('headcountOut').textContent = fmtInt(state.N);
+  hc.setAttribute('aria-valuetext', fmtInt(state.N) + ' people');
+  applyParams();
+});
+rt.addEventListener('input', () => {
+  state.p = +rt.value / 100;
+  $('rateOut').textContent = rt.value + '%';
+  rt.setAttribute('aria-valuetext', rt.value + ' percent');
+  applyParams();
+});
+$('fixRolling').addEventListener('change', e => {
+  state.fixRolling = e.target.checked;
+  canvases.rolling.fig.hidden = !state.fixRolling;
+  requestAnimationFrame(() => { sizeCanvases(); resetY(); dirty = true; });
+});
+$('fixLimits').addEventListener('change', e => { state.fixLimits = e.target.checked; dirty = true; updateStats(); });
+
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Space') return;
+  const tag = (e.target && e.target.tagName) || '';
+  if (['INPUT', 'BUTTON', 'TEXTAREA', 'SELECT', 'SUMMARY', 'A'].includes(tag) || e.target.isContentEditable || $('explainer').open) return;
+  e.preventDefault(); setRunning(!state.running);
+});
+
+/* ---------- explainer ---------- */
+const dlg = $('explainer');
+$('openExplainer').addEventListener('click', () => { syncText(); dlg.showModal(); });
+$('closeExplainer').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+/* ---------- game ---------- */
+const RULES = {
+  r1: 'a point outside the limits',
+  r2: '3 of 4 points closer to a limit than to the average',
+  r3: '8 points in a row on one side of the average'
+};
+const game = { X:[], change:null, revealed:false, guess:null, round:0, sizeN:0, sizeP:0, hist:[], lr:null };
+
+let lrTimer = 0, lrToken = 0, lrJob = null;
+function scheduleLongRun(){
+  clearTimeout(lrTimer); if(lrJob) lrJob.cancel(); lrJob=null; game.lr = null; paintLongRun();
+  const tok = ++lrToken, N = state.N, p = state.p;
+  $('benchmarkStatus').textContent='Benchmark waiting…';
+  lrTimer = setTimeout(() => {
+    const benchmark=createBenchmark(N,p,20260928);
+    lrJob=createBudgetJob({total:2000,step:()=>benchmark.step(),
+      progress:n=>{if(tok===lrToken)$('benchmarkStatus').textContent=`Benchmark: ${fmtInt(n)} / 2,000 rounds`;},
+      done:()=>{if(tok!==lrToken)return;lrJob=null;game.lr=benchmark.result();$('benchmarkStatus').textContent='Benchmark complete: 2,000 rounds; seed 20260928.';paintLongRun();}});
+  },250);
+}
+function metricText(m){
+  if(!m || !m.denominator)return 'unavailable (0 eligible rounds)';
+  return `${fmtPct(m.rate,1)} (${m.numerator}/${m.denominator}); 95% MC interval ${fmtPct(m.ci[0],1)}–${fmtPct(m.ci[1],1)}`;
+}
+function paintLongRun(){
+  const lr = game.lr;
+  $('chanceRed').textContent = lr ? `${fmtPct(lr.pointRate, 1)} (${lr.pointNumerator}/${lr.pointDenominator} readings)` : '…';
+  document.querySelectorAll('[data-x="xmrFA"]').forEach(e => e.textContent = lr ? fmtPct(lr.faA) : '…');
+  document.querySelectorAll('[data-x="xmrMiss"]').forEach(e => e.textContent = lr ? fmtPct(lr.detection.combined.postChangeNoSignal.rate) : '…');
+  $('detectionTable').innerHTML='<thead><tr><th scope="col">Rules</th><th scope="col">No signal at/after change</th><th scope="col">False alarm before change</th><th scope="col">Mean delay, detected only</th></tr></thead><tbody>'+[['rule1','Rule 1'],['combined','Rules 1–3']].map(([key,label])=>{
+    const d=lr && lr.detection[key];return `<tr><th scope="row">${label}</th><td>${d?metricText(d.postChangeNoSignal):'…'}</td><td>${d?metricText(d.prechangeFalseAlarm):'…'}</td><td>${d?(d.meanDelay==null?'unavailable':`${d.meanDelay.toFixed(2)} months (${d.detected} detected rounds)`):'…'}</td></tr>`;
+  }).join('')+'</tbody>';
+  $('benchmarkExclusions').textContent=lr?`${lr.degenerate}/${lr.rounds} rounds have zero moving range and are excluded from XmR results; human and oracle scoring retain them. XmR denominators: ${lr.evaluableStable} stable, ${lr.evaluableChanged} changed. Point-level readings within rounds are dependent; no independent-reading interval is reported.`:'Calculating eligible denominators…';
+  renderScore();
+}
+
+function newGame(advance){
+  const N = state.N, p = state.p;
+  const { X, change } = makeRound(N, p);
+  if (advance || !game.round) game.round++;
+  Object.assign(game, { X, change, revealed: false, guess: null, sizeN: N, sizeP: p });
+  $('askPane').hidden = false; $('resultPane').hidden = true;
+  document.querySelectorAll('#choices button').forEach(b => b.disabled = false);
+  $('roundLine').innerHTML = `<b>Round ${game.round}</b>Monthly turnover, annualized, on an XmR chart`;
+  $('rareNote').hidden = N * p / 12 >= 1;
+  renderGame();
+}
+
+function renderGame(){
+  const box = $('gameChartBox');
+  if (!game.X.length) return;
+  const W = Math.max(300, box.clientWidth || 640);
+  const H = Math.round(Math.min(400, Math.max(280, W * 0.52)));
+  const narrow = W < 520;
+  const m = { l: 46, r: narrow ? 64 : 96, t: 34, b: 40 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const xm = xmrOf(game.X, game.sizeN), p = game.sizeP, c = game.change;
+  $('unavailableNote').hidden=xm.evaluable;
+  $('observedTable').innerHTML='<caption>Observed monthly counts and annualized rates</caption><thead><tr><th scope="col">Period / month</th><th scope="col">Leavers</th><th scope="col">Annualized rate</th></tr></thead><tbody>'+game.X.map((x,k)=>`<tr><th scope="row">${k<12?'Baseline':'Test'} ${k<12?k+1:k-11}</th><td>${x}</td><td>${fmtPct(x*12/game.sizeN,2)}</td></tr>`).join('')+'</tbody>';
+  const yTopRaw = Math.max(Math.max(...xm.y), xm.U, p * 1.6) * 100 * 1.05;
+  const st = niceStep(yTopRaw / 4), yTop = Math.ceil(yTopRaw / st) * st, dec = st % 1 ? 1 : 0;
+  const xOf = k => m.l + k / 35 * pw;                         // k = 0..35 (0..11 baseline, 12..35 months 1..24)
+  const yOf = v => m.t + ph - Math.max(0, v) * 100 / yTop * ph;
+  const xDiv = (xOf(11) + xOf(12)) / 2;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${gameAria(xm)}" font-family='"Atkinson Hyperlegible", system-ui, sans-serif'>`;
+  s += `<rect x="${m.l}" y="${m.t}" width="${xDiv - m.l}" height="${ph}" fill="var(--wash)"/>`;
+  s += `<text x="${m.l + 4}" y="${m.t - 10}" font-size="12.5" fill="var(--muted)">${narrow ? 'Last year' : 'Last year: sets the limits'}</text>`;
+  s += `<text x="${xDiv + 6}" y="${m.t - 10}" font-size="12.5" fill="var(--ink)">${narrow ? 'Your call' : 'This period: your call'}</text>`;
+  for (let v = 0; v <= yTop + 1e-9; v += st){
+    const y = yOf(v / 100);
+    s += `<line x1="${m.l}" x2="${m.l + pw}" y1="${y}" y2="${y}" stroke="var(--rule)" stroke-width="1"/>`;
+    s += `<text x="${m.l - 8}" y="${y + 4}" font-size="12.5" text-anchor="end" fill="var(--muted)">${v.toFixed(dec)}%</text>`;
+  }
+  const yU = yOf(xm.U), yL = yOf(xm.L), yM = yOf(xm.m);
+  if(xm.evaluable){
+  s += `<rect x="${m.l}" y="${yU}" width="${pw}" height="${Math.max(0, yL - yU)}" fill="var(--band)"/>`;
+  s += `<line x1="${m.l}" x2="${m.l + pw}" y1="${yU}" y2="${yU}" stroke="var(--alarm)" stroke-width="1.5"/>`;
+  if (xm.L > 0) s += `<line x1="${m.l}" x2="${m.l + pw}" y1="${yL}" y2="${yL}" stroke="var(--alarm)" stroke-width="1.5"/>`;
+  }
+  s += `<line x1="${m.l}" x2="${m.l + pw}" y1="${yM}" y2="${yM}" stroke="var(--muted)" stroke-width="1.25"/>`;
+  s += `<line x1="${xDiv}" x2="${xDiv}" y1="${m.t - 4}" y2="${m.t + ph}" stroke="var(--line)" stroke-width="1.25"/>`;
+  [1, 6, 12, 18, 24].forEach(d => {
+    const x = xOf(11 + d);
+    s += `<line x1="${x}" x2="${x}" y1="${m.t + ph}" y2="${m.t + ph + 5}" stroke="var(--line)"/>`;
+    s += `<text x="${x}" y="${m.t + ph + 20}" font-size="12.5" text-anchor="middle" fill="var(--muted)">${d === 1 && !narrow ? 'Month 1' : d}</text>`;
+  });
+  s += `<line x1="${m.l}" x2="${m.l + pw}" y1="${m.t + ph + 0.5}" y2="${m.t + ph + 0.5}" stroke="var(--line)"/>`;
+
+  const labels = [
+    ...(xm.evaluable ? [{ y: yU, text: narrow ? 'limit' : 'upper limit', color: 'var(--alarm)' }] : []),
+    { y: yM, text: 'average', color: 'var(--muted)' }
+  ];
+  if (xm.evaluable && xm.L > 0) labels.push({ y: yL, text: narrow ? 'limit' : 'lower limit', color: 'var(--alarm)' });
+
+  if (game.revealed){
+    if (c){
+      const xc = (xOf(11 + c.month - 1) + xOf(11 + c.month)) / 2;
+      s += `<line x1="${xc}" x2="${xc}" y1="${m.t}" y2="${m.t + ph}" stroke="var(--faint)" stroke-dasharray="2 4"/>`;
+      s += `<text x="${xc + 5}" y="${m.t + 14}" font-size="12.5" fill="var(--muted)">change starts</text>`;
+      s += `<path d="M${xOf(0)} ${yOf(c.from)} H${xc} V${yOf(c.to)} H${xOf(35)}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>`;
+      labels.push({ y: yOf(c.to), text: narrow ? 'true' : 'true rate', color: 'var(--ink)' });
+    } else {
+      s += `<line x1="${xOf(0)}" x2="${xOf(35)}" y1="${yOf(p)}" y2="${yOf(p)}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>`;
+      labels.push({ y: yOf(p), text: narrow ? 'true' : 'true rate', color: 'var(--ink)' });
+    }
+  }
+  const line = (from, to) => xm.y.slice(from, to).map((v, k) => `${xOf(from + k)},${yOf(v)}`).join(' ');
+  s += `<polyline points="${line(0, 12)}" fill="none" stroke="var(--faint)" stroke-width="1" stroke-linejoin="round" opacity=".7"/>`;
+  s += `<polyline points="${line(12, 36)}" fill="none" stroke="var(--faint)" stroke-width="1.25" stroke-linejoin="round"/>`;
+  xm.base.forEach((v, k) => { s += `<circle cx="${xOf(k)}" cy="${yOf(v)}" r="3" fill="var(--faint)"><title>Last year, month ${k + 1}: ${fmtPct(v, 1)} annualized</title></circle>`; });
+  xm.test.forEach((v, k) => {
+    const out = xm.r1[k], x = xOf(12 + k), y = yOf(v);
+    if (game.revealed && xm.runPts[k]) s += `<circle cx="${x}" cy="${y}" r="7.2" fill="none" stroke="var(--amber)" stroke-width="2"/>`;
+    s += `<circle cx="${x}" cy="${y}" r="${out ? 4.6 : 3.6}" fill="${out ? 'var(--alarm)' : 'var(--bar)'}" stroke="var(--paper)" stroke-width="1.25"><title>Month ${k + 1}: ${fmtPct(v, 1)} annualized</title></circle>`;
+  });
+  labels.sort((a, b) => a.y - b.y);
+  for (let k = 1; k < labels.length; k++) if (labels[k].y - labels[k - 1].y < 15) labels[k].y = labels[k - 1].y + 15;
+  const over = labels.length ? labels[labels.length - 1].y - (m.t + ph) : 0;
+  if (over > 0) labels.forEach(l => l.y -= over);
+  labels.forEach(l => { s += `<text x="${m.l + pw + 8}" y="${l.y + 4}" font-size="12.5" fill="${l.color}">${l.text}</text>`; });
+  s += '</svg>';
+  box.innerHTML = s;
+
+  const key = [
+    '<li><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="var(--faint)"/></svg>Last year (sets the limits)</li>',
+    '<li><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="3.6" fill="var(--bar)"/></svg>This period, one month annualized</li>',
+    '<li><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="var(--alarm)"/></svg>Outside the limits</li>'
+  ];
+  if (game.revealed){
+    key.push('<li><svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 3"/></svg>True rate (future change was hidden)</li>');
+    key.push('<li><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="6.5" fill="none" stroke="var(--amber)" stroke-width="2"/><circle cx="9" cy="9" r="3.2" fill="var(--bar)"/></svg>Part of a run signal (XmR rule 2 or 3)</li>');
+  }
+  $('gameLegend').innerHTML = key.join('');
+}
+function gameAria(xm){
+  const k = xm.r1.filter(Boolean).length;
+  if(!xm.evaluable)return `Round ${game.round}: observed monthly annualized turnover. XmR unavailable because baseline moving range is zero. Observed counts are in the table below.`;
+  return `Round ${game.round}: XmR chart of monthly annualized turnover. Limits from last year; ${k} of 24 months fall outside them.` + (game.revealed ? (game.change ? ` The true rate moved from ${fmtPct(game.change.from, 1)} to ${fmtPct(game.change.to, 1)} in month ${game.change.month}.` : ' The true rate never changed.') : '');
+}
+function renderVerdict(){
+  const xm = xmrOf(game.X, game.sizeN), c = game.change;
+  const correct = (game.guess === 'change') === !!c;
+  const plural = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
+  let h = `<p class="youSaid">You said: ${game.guess === 'change' ? 'yes, something changed' : 'no, it\'s just noise'}.</p>`;
+  if (!c){
+    const k = xm.r1.filter(Boolean).length, e = xm.events[0];
+    h += `<p><span class="tag ${correct ? 'good' : 'bad'}">${correct ? 'Right.' : 'Not this time.'}</span> The true rate stayed at ${fmtPct(game.sizeP, 1)} for all 24 months.</p>`;
+    h += `<p>Red dots: <b>${k}</b>${k ? ', all of them chance' : ''}.</p>`;
+    h += `<p>XmR rules: ${e ? `a false signal in month ${e.j + 1} (${RULES[e.rule]}).` : 'no signal, which is correct.'}</p>`;
+  } else {
+    const dir = c.to > c.from ? 'rose' : 'fell', cut = c.month - 1;
+    const before = xm.r1.slice(0, cut).filter(Boolean).length, after = xm.r1.slice(cut).filter(Boolean).length;
+    const eA = xm.events.find(e => e.j >= cut), eB = xm.events.find(e => e.j < cut);
+    h += `<p><span class="tag ${correct ? 'good' : 'bad'}">${correct ? 'Right.' : 'Missed it.'}</span> In month ${c.month} the true rate ${dir} from ${fmtPct(c.from, 1)} to ${fmtPct(c.to, 1)}.</p>`;
+    h += `<p>Red dots: <b>${before}</b> before the change, <b>${after}</b> after it.</p>`;
+    let t = 'XmR rules: ';
+    if (!eA && eB) t += `a false signal in month ${eB.j + 1} (${RULES[eB.rule]}), before anything had changed, and nothing after the change.`;
+    else {
+      if (!eA) t += 'no signal within these 24 months.';
+      else if (eA.j === cut) t += `a signal in the month of the change (${RULES[eA.rule]}).`;
+      else t += `first signal in month ${eA.j + 1} (${RULES[eA.rule]}), ${plural(eA.j - cut, 'month')} after the change.`;
+      if (eB) t += ` They also gave a false signal in month ${eB.j + 1}, before anything had changed.`;
+    }
+    h += `<p>${t}</p>`;
+  }
+  if(!xm.evaluable){h=h.replace(/<p>Red dots:[\s\S]*?<\/p>/g,'').replace(/<p>XmR rules:[\s\S]*?<\/p>/g,'');h+='<p>XmR unavailable: baseline moving range is zero. This round is excluded from XmR scoring; no stability conclusion is available.</p>';}
+  else if(c){const d=summarizeEvents(xm.events,c);h+=`<p>Whole-dashboard classification: ${d.any?'changed':'noise'}. Detection at/after change: ${d.detected?'yes':'missed'}.</p>`;}
+  $('verdict').innerHTML = h;
+}
+function renderScore(){
+  const H = game.hist, board = $('scoreboard');
+  if (!H.length){ board.hidden = true; return; }
+  board.hidden = false;
+  const lr=game.lr,right=H.filter(x=>x.guess===x.has).length;
+  $('scoreSub').textContent=`Your calls: ${right} of ${H.length} right. Classification treats any signal anywhere in the dashboard as “changed”; see detection timing separately.`;
+  const cell=(num,den,m)=>`<td><b>${den?`${num} of ${den}`:'unavailable (0 eligible rounds)'}</b>${m===undefined?'':`<span class="lr">benchmark ${m?metricText(m):'…'}</span>`}</td>`;
+  const row=(label,cls,say,key,eligible)=>{
+    const rounds=eligible?H.filter(x=>x.evaluable):H,st=rounds.filter(x=>!x.has),ch=rounds.filter(x=>x.has);
+    return `<tr class="${cls}"><th scope="row">${label}</th>${cell(st.filter(say).length,st.length,key?(lr?lr.metrics['fa'+key]:null):undefined)}${cell(ch.filter(x=>!say(x)).length,ch.length,key?(lr?lr.metrics['mi'+key]:null):undefined)}</tr>`;
+  };
+  $('scoreTable').innerHTML='<thead><tr><th scope="col">Method</th><th scope="col">False positive<span class="thsub">stable dashboards called “changed”</span></th><th scope="col">False negative<span class="thsub">changed dashboards called “noise”</span></th></tr></thead><tbody>'+
+    row('You','you',x=>x.guess)+row('Any red dot = change','',x=>x.any1,'1',true)+row('XmR rules 1–3','',x=>x.anyA,'A',true)+row('Approximate oracle *','muted',x=>x.ideal,'I')+'</tbody>';
+}
+function guess(g){
+  if (game.revealed || !game.X.length) return;
+  game.revealed = true; game.guess = g;
+  const xm = xmrOf(game.X, game.sizeN);
+  game.hist.push({ evaluable:xm.evaluable, has: !!game.change, guess: g === 'change', any1: xm.r1.some(Boolean), anyA: xm.events.length > 0, ideal: idealFor(game.X.slice(12), game.sizeN, game.sizeP) });
+  renderVerdict(); renderScore();
+  $('askPane').hidden = true; $('resultPane').hidden = false;
+  renderGame();
+  $('nextBtn').focus({ preventScroll: true });
+}
+document.querySelectorAll('#choices button').forEach(b => b.addEventListener('click', () => guess(b.dataset.guess)));
+$('nextBtn').addEventListener('click', () => { newGame(true); const first = document.querySelector('#choices button'); first && first.focus({ preventScroll: true }); });
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.repeat || !$('askPane').contains(e.target)) return;
+  const tag = (e.target && e.target.tagName) || '';
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || $('explainer').open || game.revealed) return;
+  if (e.key === 'y' || e.key === 'Y'){e.preventDefault();guess('change');}
+  else if (e.key === 'n' || e.key === 'N'){e.preventDefault();guess('noise');}
+});
+
+/* ---------- boot ---------- */
+paintThemeBtn();
+readPalette();
+setupModel(); freshPanels(); syncText();
+sizeCanvases(); resetY();
+newGame(true); updateStats(); scheduleLongRun();
+let resizeRaf = 0;
+const ro = new ResizeObserver(() => { cancelAnimationFrame(resizeRaf); resizeRaf = requestAnimationFrame(() => { sizeCanvases(); renderGame(); }); });
+ro.observe($('panels')); ro.observe($('gameChartBox'));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { dirty = true; renderGame(); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { paintThemeBtn(); readPalette(); dirty = true; renderGame(); });
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
