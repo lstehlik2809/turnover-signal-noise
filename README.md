@@ -12,6 +12,8 @@ At the default settings, the company has 1,000 people and an expected turnover r
 - Compare annual, quarterly, monthly, and rolling 12-month views. Try limits sized to each reporting window.
 - Play a 24-month dashboard game. In half of the rounds, a real change is hidden in the data. Decide whether the rate changed, then compare your call with three XmR chart rules and an informed statistical reference.
 
+On your first visit in a browser, the “What am I looking at?” explainer opens automatically. Close it to explore the app; its button in the header opens it again whenever you need it.
+
 The game makes the tradeoff concrete. With a 12-month baseline, a rule that waits for one point beyond the XmR limits misses about **58%** of simulated 25–60% relative changes before the dashboard ends. Using all three rules reduces misses to about **20%**, while at least one rule fires in about **40%** of dashboards with no change. These are results for the stated simulation, not general performance guarantees. See [the benchmark and its definitions](BENCHMARK.md) for denominators, timing, intervals, and reproducibility.
 
 The practical question is which yardstick fits the window and the decision. A rolling 12-month rate is steadier but slower to show a change. Window-specific ranges make short-window readings easier to interpret, but more ways to flag a chart also create more false alarms. Showing the **count of leavers** beside a rate helps keep the size of the sample visible.

@@ -962,9 +962,16 @@ document.addEventListener('keydown', e => {
 
 /* ---------- explainer ---------- */
 const dlg = $('explainer');
-$('openExplainer').addEventListener('click', () => { syncText(); dlg.showModal(); });
+const EXPLAINER_SEEN_KEY = 'turnover-noise-explainer-seen-v1';
+function showExplainer(){ syncText(); dlg.showModal(); }
+$('openExplainer').addEventListener('click', showExplainer);
 $('closeExplainer').addEventListener('click', () => dlg.close());
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+function showExplainerOnFirstVisit(){
+  try { if (localStorage.getItem(EXPLAINER_SEEN_KEY) === '1') return; } catch (e) {}
+  showExplainer();
+  try { localStorage.setItem(EXPLAINER_SEEN_KEY, '1'); } catch (e) {}
+}
 
 /* ---------- game ---------- */
 const RULES = {
@@ -1181,6 +1188,7 @@ ro.observe($('panels')); ro.observe($('gameChartBox'));
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { dirty = true; renderGame(); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { paintThemeBtn(); readPalette(); dirty = true; renderGame(); });
 requestAnimationFrame(frame);
+showExplainerOnFirstVisit();
 })();
 </script>
 </body>
