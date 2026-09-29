@@ -110,6 +110,8 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px;margin:0}
 .round{margin:0 0 4px;font-size:15px;color:var(--muted)}
 .round b{color:var(--ink);margin-right:8px}
 .game-legend{margin-top:10px}
+.rolling-control{display:inline-flex;align-items:center;gap:9px;min-height:44px;margin-top:8px;font-size:15px;cursor:pointer}
+.rolling-control input{width:18px;height:18px;margin:0;accent-color:var(--fix);flex:none}
 .hint{font-size:14px;color:var(--muted);margin:12px 0 0}
 @media (hover: none){.kbdhint{display:none}}
 .youSaid{font-size:14.5px;color:var(--muted)}
@@ -257,13 +259,17 @@ td.hot{color:var(--alarm);font-weight:700}
   <ol class="howto">
     <li><b>Read the chart.</b> The grey dots are last year's 12 months. They set the average line and the red limits: average ± 2.66 × the average month-to-month change. The 24 dark dots are this period, each one month's leavers × 12 ÷ headcount. A red dot falls outside the limits.</li>
     <li><b>Make the call.</b> In half the rounds the true rate secretly moves up or down by 25% to 60% in some month between 7 and 18. In the other half it never moves. In stable, evaluable rounds, the simulated share of dark dots turning red is <span id="chanceRed">…</span>.</li>
-    <li><b>See the truth.</b> Answering reveals the true rate and what the three XmR rules would have flagged. The scoreboard then compares your calls with the rules.</li>
+    <li><b>See the truth.</b> Answering reveals the true rate, a rolling 12-month comparison you can hide or show, and what the three XmR rules would have flagged. The scoreboard then compares your calls with the rules.</li>
   </ol>
   <div class="game-body">
     <div class="chartcol">
       <p class="round" id="roundLine"></p>
       <div id="gameChartBox"></div>
       <ul class="legend game-legend" id="gameLegend" aria-label="Game chart key"></ul>
+      <div id="gameRollingReveal" hidden>
+        <label class="rolling-control"><input type="checkbox" id="gameRolling" checked aria-controls="gameChartBox gameLegend" aria-describedby="gameRollingNote"> Show rolling 12-month turnover</label>
+        <p class="tinynote" id="gameRollingNote">Each value sums the last 12 months’ leavers ÷ headcount. Test month 1 includes baseline months 2–12; only earlier and current data enter each window. A sustained change starts affecting the expected rolling rate immediately and is fully reflected after 12 changed months. The observed line still fluctuates. Red XmR limits and rules apply only to monthly dots.</p>
+      </div>
       <p class="tinynote" id="unavailableNote" hidden>XmR unavailable: all 12 baseline counts are identical, so the moving range is zero. No XmR stability or change conclusion is available; human and oracle calls are still scored.</p>
       <details><summary>Observed counts and annualized rates</summary><div class="tablewrap"><table id="observedTable"></table></div></details>
       <p class="tinynote" id="rareNote" hidden>Fewer than one expected leaver per month: discrete counts make these XmR rules unreliable. A zero-moving-range baseline is not evaluable. Consider methods designed for rare events.</p>
@@ -326,7 +332,8 @@ td.hot{color:var(--alarm);font-weight:700}
 
     <h3>Looking often isn't the problem. The yardstick is.</h3>
     <p>Frequent monitoring is how you catch a real change early. What goes wrong is judging small windows against annual-sized expectations. Better options, each with a price:</p>
-    <p><b>Rolling 12-month turnover.</b> Updates every month and is as steady as the annual number, but it reacts slowly. Adjacent windows share 11 of 12 months: their correlation is 11/12 in this independent, constant-rate model. Flagged readings therefore arrive in streaks, not independent alarms.</p>
+    <p><b>Rolling 12-month turnover.</b> Updates every month and is as steady as the annual number under a constant rate. A sustained change starts affecting its expected value immediately, with the full new rate reflected after 12 changed months; observed values still fluctuate. Adjacent windows share 11 of 12 months: their correlation is 11/12 in this independent, constant-rate model. Flagged readings therefore arrive in streaks, not independent alarms.</p>
+    <p class="note">After you answer a game round, a solid rolling line appears beside the dashed true rate. Use its checkbox to hide or show it. Each value is the last 12 months’ actual leavers divided by headcount; the first test value uses baseline months 2–12 plus test month 1. The red XmR limits and scoring rules remain for monthly readings only.</p>
     <p><b>2 SD reference bands sized to the window.</b> The checkbox uses ±2 SD of each view’s own noise. The table shows exact discrete binomial probabilities at your settings, which need not be 5%. A conventional p-chart uses 3 SD control limits; this demonstration is not that chart. Wider bands reduce flags and can conceal small changes.</p>
     <p><b>XmR charts (process behavior charts).</b> The limits come from your own recent data (average ± 2.66 × the average month-to-month change), and three simple rules tell you when to look closer, which makes them usable by non-technical colleagues. The game on this page uses them, following <a href="https://blog-about-people-analytics.netlify.app/posts/2024-10-30-xmr-charts-in-people-analytics/" target="_blank" rel="noopener">Stehlík (2024)</a>, and <a href="https://xmrit.com/t/" target="_blank" rel="noopener">Xmrit</a> draws them for free. They still raise false alarms: with only one year of baseline, the three rules fire on about <span data-x="xmrFA">41%</span> of evaluable stable two-year dashboards in the game, while giving no signal at or after the change in about <span data-x="xmrMiss">…</span> of evaluable changed rounds. These are different questions from whole-dashboard classification. A zero-moving-range baseline is unavailable and excluded from XmR denominators.</p>
     <p><b>Counts with a range beat bare rates.</b> "<span data-x="exCount">13 leavers</span> this month, and <span data-x="exRange">3 to 14</span> is normal" is much harder to overreact to than "annualized turnover hit <span data-x="exRate">15.6%</span>".</p>
@@ -979,7 +986,11 @@ const RULES = {
   r2: '3 of 4 points closer to a limit than to the average',
   r3: '8 points in a row on one side of the average'
 };
-const game = { X:[], change:null, revealed:false, guess:null, round:0, sizeN:0, sizeP:0, hist:[], lr:null };
+// Presentation-only summary: X contains 12 baseline counts followed by test counts.
+function rollingTestRates(X, N){
+  return X.slice(12).map((_, j) => X.slice(j + 1, j + 13).reduce((sum, count) => sum + count, 0) / N);
+}
+const game = { X:[], change:null, revealed:false, showRolling:true, guess:null, round:0, sizeN:0, sizeP:0, hist:[], lr:null };
 
 let lrTimer = 0, lrToken = 0, lrJob = null;
 function scheduleLongRun(){
@@ -1013,7 +1024,7 @@ function newGame(advance){
   const N = state.N, p = state.p;
   const { X, change } = makeRound(N, p);
   if (advance || !game.round) game.round++;
-  Object.assign(game, { X, change, revealed: false, guess: null, sizeN: N, sizeP: p });
+  Object.assign(game, { X, change, revealed: false, showRolling:true, guess: null, sizeN: N, sizeP: p });
   $('askPane').hidden = false; $('resultPane').hidden = true;
   document.querySelectorAll('#choices button').forEach(b => b.disabled = false);
   $('roundLine').innerHTML = `<b>Round ${game.round}</b>Monthly turnover, annualized, on an XmR chart`;
@@ -1030,9 +1041,13 @@ function renderGame(){
   const m = { l: 46, r: narrow ? 64 : 96, t: 34, b: 40 };
   const pw = W - m.l - m.r, ph = H - m.t - m.b;
   const xm = xmrOf(game.X, game.sizeN), p = game.sizeP, c = game.change;
+  const rolling = game.revealed ? rollingTestRates(game.X, game.sizeN) : [];
+  const showRolling = game.revealed && game.showRolling;
+  $('gameRollingReveal').hidden = !game.revealed;
+  $('gameRolling').checked = game.showRolling;
   $('unavailableNote').hidden=xm.evaluable;
-  $('observedTable').innerHTML='<caption>Observed monthly counts and annualized rates</caption><thead><tr><th scope="col">Period / month</th><th scope="col">Leavers</th><th scope="col">Annualized rate</th></tr></thead><tbody>'+game.X.map((x,k)=>`<tr><th scope="row">${k<12?'Baseline':'Test'} ${k<12?k+1:k-11}</th><td>${x}</td><td>${fmtPct(x*12/game.sizeN,2)}</td></tr>`).join('')+'</tbody>';
-  const yTopRaw = Math.max(Math.max(...xm.y), xm.U, p * 1.6) * 100 * 1.05;
+  $('observedTable').innerHTML=`<caption>Observed monthly counts and annualized rates${game.revealed ? ', with trailing 12-month turnover for test months' : ''}</caption><thead><tr><th scope="col">Period / month</th><th scope="col">Leavers</th><th scope="col">Annualized rate</th>${game.revealed ? '<th scope="col">Rolling 12-month turnover</th>' : ''}</tr></thead><tbody>`+game.X.map((x,k)=>`<tr><th scope="row">${k<12?'Baseline':'Test'} ${k<12?k+1:k-11}</th><td>${x}</td><td>${fmtPct(x*12/game.sizeN,2)}</td>${game.revealed ? `<td>${k<12?'—':fmtPct(rolling[k-12],2)}</td>` : ''}</tr>`).join('')+'</tbody>';
+  const yTopRaw = Math.max(Math.max(...xm.y), xm.U, p * 1.6, ...(showRolling ? rolling : [])) * 100 * 1.05;
   const st = niceStep(yTopRaw / 4), yTop = Math.ceil(yTopRaw / st) * st, dec = st % 1 ? 1 : 0;
   const xOf = k => m.l + k / 35 * pw;                         // k = 0..35 (0..11 baseline, 12..35 months 1..24)
   const yOf = v => m.t + ph - Math.max(0, v) * 100 / yTop * ph;
@@ -1082,6 +1097,7 @@ function renderGame(){
   const line = (from, to) => xm.y.slice(from, to).map((v, k) => `${xOf(from + k)},${yOf(v)}`).join(' ');
   s += `<polyline points="${line(0, 12)}" fill="none" stroke="var(--faint)" stroke-width="1" stroke-linejoin="round" opacity=".7"/>`;
   s += `<polyline points="${line(12, 36)}" fill="none" stroke="var(--faint)" stroke-width="1.25" stroke-linejoin="round"/>`;
+  if (showRolling) s += `<polyline id="gameRollingLine" points="${rolling.map((v,j)=>`${xOf(12+j)},${yOf(v)}`).join(' ')}" fill="none" stroke="var(--fix)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><title>Rolling 12-month turnover: trailing leavers divided by headcount</title></polyline>`;
   xm.base.forEach((v, k) => { s += `<circle cx="${xOf(k)}" cy="${yOf(v)}" r="3" fill="var(--faint)"><title>Last year, month ${k + 1}: ${fmtPct(v, 1)} annualized</title></circle>`; });
   xm.test.forEach((v, k) => {
     const out = xm.r1[k], x = xOf(12 + k), y = yOf(v);
@@ -1099,9 +1115,10 @@ function renderGame(){
   const key = [
     '<li><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="var(--faint)"/></svg>Last year (sets the limits)</li>',
     '<li><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="3.6" fill="var(--bar)"/></svg>This period, one month annualized</li>',
-    '<li><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="var(--alarm)"/></svg>Outside the limits</li>'
+    '<li><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="var(--alarm)"/></svg>Monthly reading outside XmR limits</li>'
   ];
   if (game.revealed){
+    if (showRolling) key.push('<li><svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--fix)" stroke-width="2.5"/></svg>Rolling 12-month turnover</li>');
     key.push('<li><svg width="22" height="12" aria-hidden="true"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 3"/></svg>True rate (future change was hidden)</li>');
     key.push('<li><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="6.5" fill="none" stroke="var(--amber)" stroke-width="2"/><circle cx="9" cy="9" r="3.2" fill="var(--bar)"/></svg>Part of a run signal (XmR rule 2 or 3)</li>');
   }
@@ -1109,8 +1126,8 @@ function renderGame(){
 }
 function gameAria(xm){
   const k = xm.r1.filter(Boolean).length;
-  if(!xm.evaluable)return `Round ${game.round}: observed monthly annualized turnover. XmR unavailable because baseline moving range is zero. Observed counts are in the table below.`;
-  return `Round ${game.round}: XmR chart of monthly annualized turnover. Limits from last year; ${k} of 24 months fall outside them.` + (game.revealed ? (game.change ? ` The true rate moved from ${fmtPct(game.change.from, 1)} to ${fmtPct(game.change.to, 1)} in month ${game.change.month}.` : ' The true rate never changed.') : '');
+  const summary = !xm.evaluable ? `Round ${game.round}: observed monthly annualized turnover. XmR unavailable because baseline moving range is zero.` : `Round ${game.round}: XmR chart of monthly annualized turnover. Limits from last year apply only to monthly readings; ${k} of 24 months fall outside them.`;
+  return summary + (game.revealed ? (game.change ? ` The true rate moved from ${fmtPct(game.change.from, 1)} to ${fmtPct(game.change.to, 1)} in month ${game.change.month}.` : ' The true rate never changed.') + (game.showRolling ? ' Solid line: rolling 12-month turnover.' : '') + ' Rolling values are in the observed data table below.' : ' Observed counts are in the table below.');
 }
 function renderVerdict(){
   const xm = xmrOf(game.X, game.sizeN), c = game.change;
@@ -1168,6 +1185,11 @@ function guess(g){
 }
 document.querySelectorAll('#choices button').forEach(b => b.addEventListener('click', () => guess(b.dataset.guess)));
 $('nextBtn').addEventListener('click', () => { newGame(true); const first = document.querySelector('#choices button'); first && first.focus({ preventScroll: true }); });
+$('gameRolling').addEventListener('change', () => {
+  if (!game.revealed) return;
+  game.showRolling = $('gameRolling').checked;
+  renderGame();
+});
 document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.repeat || !$('askPane').contains(e.target)) return;
   const tag = (e.target && e.target.tagName) || '';

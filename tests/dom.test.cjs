@@ -56,6 +56,31 @@ const frame = t => { const pending = [...raf.values()]; raf.clear(); pending.for
     assert.ok(doc.querySelector('.game details table'), 'Observed chart data have an accessible table');
     assert.equal(doc.querySelector('.game details table tbody').rows.length, 36);
     assert.doesNotMatch(doc.querySelector('.game details table').textContent, /true rate|change starts/i);
+    const assertGuessing = () => {
+      assert.equal(el('gameRollingReveal').hidden, true);
+      assert.equal(doc.getElementById('gameRollingLine'), null);
+      assert.doesNotMatch(el('gameLegend').textContent, /rolling/i);
+      assert.doesNotMatch(el('observedTable').textContent, /rolling|trailing/i);
+      assert.doesNotMatch(el('gameChartBox').getAttribute('aria-label') || el('gameChartBox').innerHTML, /rolling/i);
+      assert.equal(el('observedTable').querySelectorAll('thead th').length, 3);
+    };
+    const assertRevealedRolling = () => {
+      assert.equal(el('gameRollingReveal').hidden, false);
+      assert.equal(el('gameRolling').checked, true);
+      const line = el('gameRollingLine');
+      assert.equal(line.getAttribute('points').split(' ').length, 24);
+      assert.equal(line.hasAttribute('stroke-dasharray'), false);
+      assert.equal(line.getAttribute('stroke'), 'var(--fix)');
+      assert.match(el('gameLegend').textContent, /Rolling 12-month/);
+      const rows = [...el('observedTable').querySelectorAll('tbody tr')];
+      const counts = rows.map(row => Number(row.cells[1].textContent));
+      const N = Number(el('headcountOut').textContent.replaceAll(',', ''));
+      for (let j = 0; j < 24; j++) {
+        const expected = counts.slice(j + 1, j + 13).reduce((a,b) => a+b, 0) / N * 100;
+        assert.equal(rows[j + 12].cells[3].textContent, expected.toFixed(2) + '%');
+      }
+    };
+    assertGuessing();
 
     doc.body.focus(); key(doc.body, 'y');
     assert.equal(el('resultPane').hidden, true, 'Unrelated Y key does not answer');
@@ -65,9 +90,40 @@ const frame = t => { const pending = [...raf.values()]; raf.clear(); pending.for
     assert.equal(el('resultPane').hidden, false, 'Answer-scoped keyboard works');
     assert.equal(el('scoreboard').hidden, false);
     assert.equal(doc.activeElement, el('nextBtn'));
+    assertRevealedRolling();
+    const scoreBeforeToggle = el('scoreTable').innerHTML;
+    const observedBeforeToggle = el('observedTable').innerHTML;
+    const svgBeforeToggle = el('gameChartBox').innerHTML;
+    const originalRandom = w.Math.random;
+    let toggleRandomCalls = 0;
+    w.Math.random = () => { toggleRandomCalls++; return originalRandom(); };
+    el('gameRolling').click();
+    assert.equal(doc.getElementById('gameRollingLine'), null);
+    assert.doesNotMatch(el('gameLegend').textContent, /rolling/i);
+    assert.equal(el('observedTable').innerHTML, observedBeforeToggle, 'Revealed values remain accessible when overlay is hidden');
+    assert.equal(el('scoreTable').innerHTML, scoreBeforeToggle, 'Toggle does not change scores');
+    el('gameRolling').click();
+    assert.equal(el('gameChartBox').innerHTML, svgBeforeToggle, 'Restoring overlay preserves exact chart/truth');
+    assert.equal(toggleRandomCalls, 0, 'Toggle consumes no random draws');
+    w.Math.random = originalRandom;
+    el('gameRolling').click();
     el('nextBtn').click();
     assert.equal(el('resultPane').hidden, true);
     assert.equal(doc.activeElement, doc.querySelector('#choices button'));
+    assertGuessing();
+    doc.querySelector('#choices button').click();
+    assertRevealedRolling();
+    el('gameRolling').click();
+    input('rate', '11');
+    assertGuessing();
+    doc.querySelector('#choices button').click();
+    assertRevealedRolling();
+    el('gameRolling').click();
+    input('headcount', '5');
+    assertGuessing();
+    doc.querySelector('#choices button').click();
+    assertRevealedRolling();
+    el('nextBtn').click();
 
     el('openExplainer').click(); assert.equal(el('explainer').open, true);
     key(answer, 'y'); assert.equal(el('resultPane').hidden, true, 'Dialog blocks game shortcut');
@@ -125,6 +181,8 @@ const frame = t => { const pending = [...raf.values()]; raf.clear(); pending.for
     input('rate', '3');
     assert.equal(el('unavailableNote').hidden, false);
     doc.querySelector('#choices button').click();
+    assertRevealedRolling();
+    assert.ok([...el('gameRollingLine').getAttribute('points').split(' ')].every(point => point.split(',').every(value => Number.isFinite(Number(value)))), 'Rolling renders finite values with unavailable XmR baseline');
     assert.match(el('verdict').textContent, /unavailable|not evaluable/i);
     assert.doesNotMatch(el('verdict').textContent, /no signal, which is correct/i);
     const xmrRows = [...el('scoreTable').querySelectorAll('tbody tr')].slice(1,3);
@@ -140,7 +198,7 @@ const frame = t => { const pending = [...raf.values()]; raf.clear(); pending.for
       assert.equal(returning.window.document.getElementById('explainer').open, true, 'Returning visitor can reopen explainer');
     } finally { returning.window.close(); }
     assert.equal(errors.length, 0, errors.map(String).join('\n'));
-    console.log('PASS: first/returning visit explainer, DOM initialization, observed data table, answer/next, scoped keys, theme, dialog wiring, toggles, run/pause, add/clear, parameter cancellation and benchmark completion.');
+    console.log('PASS: reveal-only rolling line/table, toggle without RNG/score changes, next/settings reset, unavailable baseline, first/returning visit explainer, DOM initialization, answer/next, scoped keys, theme, dialog wiring, run/pause, add/clear, parameter cancellation and benchmark completion.');
     console.log('Not covered: rendered layout, native canvas/dialog behavior, screen readers.');
   } finally { w.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -31,6 +31,7 @@ From this directory:
 
 ```powershell
 node tests/model.test.cjs
+node tests/rolling.test.cjs
 python tests/independent-checks.py
 node tests/dom.test.cjs
 node tests/publication-benchmark.cjs 100000
@@ -44,6 +45,8 @@ The DOM test uses jsdom installed outside the project. If needed:
 npm install --prefix "$env:TEMP\turnover-audit-tools" jsdom --no-audit --no-fund
 ```
 
-It tests initialization, observed-data access, keyboard scope, answer/next flow, control wiring and cancellation. Canvas and dialog APIs are stubbed; this is **not rendered or screen-reader verification**. Browser security policy rejected the local HTML URL, including a retry after the user explicitly authorized access. Desktop/mobile layout, native dialog behavior and actual rendering therefore remain unverified.
+It tests initialization, observed-data access, keyboard scope, answer/next flow, control wiring and cancellation. The rolling checks cover trailing-window arithmetic, reveal-only access, hide/show and round reset behavior. Canvas and dialog APIs are stubbed; these tests are **not rendered or screen-reader verification**.
+
+On 2026-09-29, the app was also checked in a browser served over localhost. The rolling comparison was visually inspected in stable and changed rounds, at desktop and 390-pixel phone widths, in light and dark themes. Hide/show preserved the score; the next round hid the comparison until answering again. All 24 displayed rolling values in an inspected round matched sums of the trailing observed counts. Native dialog opening and closing worked. Screen-reader testing remains unperformed.
 
 The public app is available at https://lstehlik2809.github.io/turnover-signal-noise/.
